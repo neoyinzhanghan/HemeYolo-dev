@@ -63,3 +63,22 @@ def enforce_image_extension(images_dir, extension='.jpg'):
             # get the new image name by replacing the last four characters with .jpg
             new_name = image_base_name[:-4] + extension
             os.rename(image_name, new_name)
+
+def renormalize_probs(probs, indices_to_keep):
+    """ Take a probability list and renormalize it so that the sum of the probabilities of the indices_to_keep is 1. """
+
+    # get the sum of the probabilities of the indices_to_keep
+    sum_probs = sum([probs[index] for index in indices_to_keep])
+
+    # renormalize the probabilities
+    probs = [probs[i] / sum_probs for i in range(len(probs)) if i in indices_to_keep]
+
+    return probs
+
+def check_same_name(image_path, label_path):
+    """ Check that the image_path and label_path have the same basename. """
+
+    image_name = os.path.splitext(os.path.basename(image_path))[0]
+    label_name = os.path.splitext(os.path.basename(label_path))[0]
+
+    return image_name == label_name

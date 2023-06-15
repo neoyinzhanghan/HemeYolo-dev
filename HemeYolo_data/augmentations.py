@@ -1,5 +1,5 @@
 import os
-from HemeYolo_data.utils import get_label_as_df
+from HemeYolo_data.utils import get_label_as_df, renormalize_probs, check_same_name
 import cv2
 import random
 import numpy as np
@@ -27,14 +27,14 @@ The following augmentations are supported:
         - Hue
         - ColorJitterI want you
         - Brightness
-        - Blurr
+        - Blur
         - Sharpen
         - Noise """
 
 """ The label dfs are assumed to be in the following format: [class, center_x, center_y, box_width, box_height] in relative coordinates. """
 
 ####################################################################################################
-# CLASS DEFINITION
+# MAIN SUPER CLASS DEFINITION
 ####################################################################################################
 
 # The replacement image path is named clot.jpg and is located in the exact same folder as this python file
@@ -45,18 +45,26 @@ class DeepHemeAugmentor():
     """ DeepHemeAugmentor class that contains all the augmentation methods, an original image, and original label df, and their augmentation sequences.
 
     === Attributes ===
-    image: the original image
-    label_df: the original label df
+    image: the current image
+    label_df: the current label df
     image_sequence: a dictionary of augmented images
     label_sequence: a dictionary of augmented label dfs
     augmentation_sequence: a list containing the sequence of augmentations
     width: the width of the original image
     height: the height of the original image
+    supported_augmentations: [HFlip, VFlip, Rot90, Rot180, Rot270, CropNResize, Cutout, Blendout, Contrast, Saturation, Hue, ColorJitter, Brightness, Blur, Sharpen, Noise]] 
+    name: the name of the image
 
     """
 
     def __init__(self, image_path, label_path) -> None:
         """ Initialize the Augmentor class with an image and a label df. """
+
+        # check that image_path and label_path have the same name
+        if not check_same_name(image_path, label_path):
+            raise ValueError('image_path and label_path must have the same base pre-extension name.')
+        else:
+            self.name = os.path.basename(os.path.splitext(image_path)[0])
 
         # open the image in cv2
         self.image = cv2.imread(image_path)
@@ -72,11 +80,7 @@ class DeepHemeAugmentor():
         self.width = self.image.shape[1]
         self.height = self.image.shape[0]
 
-    def get_augmentations(self):
-        """ Return the augmentation sequence. """
-
-        return self.augmentation_sequence
-    
+        self.supported_augmentations = ['HFlip', 'VFlip', 'Rot90', 'Rot180', 'Rot270', 'CropNResize', 'Cutout', 'Blendout', 'Contrast', 'Saturation', 'Hue', 'ColorJitter', 'Brightness', 'Blur', 'Sharpen', 'Noise']
 
     ####################################################################################################
     # GEOMETRIC TRANSFORMATIONS
@@ -88,15 +92,18 @@ class DeepHemeAugmentor():
         # flip the image horizontally
         new_image = cv2.flip(self.image, 1)
 
-        # flip the label df horizontally
         new_label_df = self.label_df.copy()
-        new_label_df['center_x'] = 1 - new_label_df['center_x']
+        if new_label_df is not None:
+            # flip the label df horizontally
+            new_label_df['center_x'] = 1 - new_label_df['center_x']
 
         # append the new image and label df to the sequence
         self.image_sequence['HFlip'] = new_image
         self.label_sequence['HFlip'] = new_label_df
 
         self.augmentation_sequence.append('HFlip')
+
+        self.image, self.label_df = new_image, new_label_df
     
     def VFlip(self):
         """ Vertical flip the image and label df. """
@@ -104,9 +111,10 @@ class DeepHemeAugmentor():
         # flip the image vertically
         new_image = cv2.flip(self.image, 0)
 
-        # flip the label df vertically
-        new_label_df = self.label_df.copy()
-        new_label_df['center_y'] = 1 - new_label_df['center_y']
+        if new_label_df is not None:
+            # flip the label df vertically
+            new_label_df = self.label_df.copy()
+            new_label_df['center_y'] = 1 - new_label_df['center_y']
 
         # append the new image and label df to the sequence
         self.image_sequence['VFlip'] = new_image
@@ -114,21 +122,26 @@ class DeepHemeAugmentor():
 
         self.augmentation_sequence.append('VFlip')
 
+        self.image, self.label_df = new_image, new_label_df
+
     def Rot90(self):
         """ Rotate the image and label df 90 degrees clockwise. """
 
         # rotate the image 90 degrees clockwise
         new_image = cv2.rotate(self.image, cv2.ROTATE_90_CLOCKWISE)
 
-        # rotate the label df 90 degrees clockwise
         new_label_df = self.label_df.copy()
-        new_label_df['center_x'], new_label_df['center_y'] = 1 - new_label_df['center_y'], new_label_df['center_x']
+        if new_label_df is not None:
+            # rotate the label df 90 degrees clockwise
+            new_label_df['center_x'], new_label_df['center_y'] = 1 - new_label_df['center_y'], new_label_df['center_x']
 
         # append the new image and label df to the sequence
         self.image_sequence['Rot90'] = new_image
         self.label_sequence['Rot90'] = new_label_df
 
         self.augmentation_sequence.append('Rot90')
+
+        self.image, self.label_df = new_image, new_label_df
     
     def Rot180(self):
         """ Rotate the image and label df 180 degrees clockwise. """
@@ -136,15 +149,18 @@ class DeepHemeAugmentor():
         # rotate the image 180 degrees clockwise
         new_image = cv2.rotate(self.image, cv2.ROTATE_180)
 
-        # rotate the label df 180 degrees clockwise
         new_label_df = self.label_df.copy()
-        new_label_df['center_x'], new_label_df['center_y'] = 1 - new_label_df['center_x'], 1 - new_label_df['center_y']
+        if new_label_df is not None:
+            # rotate the label df 180 degrees clockwise
+            new_label_df['center_x'], new_label_df['center_y'] = 1 - new_label_df['center_x'], 1 - new_label_df['center_y']
 
         # append the new image and label df to the sequence
         self.image_sequence['Rot180'] = new_image
         self.label_sequence['Rot180'] = new_label_df
 
         self.augmentation_sequence.append('Rot180')
+
+        self.image, self.label_df = new_image, new_label_df
     
     def Rot270(self):
         """ Rotate the image and label df 270 degrees clockwise. """
@@ -152,15 +168,18 @@ class DeepHemeAugmentor():
         # rotate the image 270 degrees clockwise
         new_image = cv2.rotate(self.image, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
-        # rotate the label df 270 degrees clockwise
         new_label_df = self.label_df.copy()
-        new_label_df['center_x'], new_label_df['center_y'] = new_label_df['center_y'], 1 - new_label_df['center_x']
+        if new_label_df is not None:
+            # rotate the label df 270 degrees clockwise
+            new_label_df['center_x'], new_label_df['center_y'] = new_label_df['center_y'], 1 - new_label_df['center_x']
 
         # append the new image and label df to the sequence
         self.image_sequence['Rot270'] = new_image
         self.label_sequence['Rot270'] = new_label_df
 
         self.augmentation_sequence.append('Rot270')
+
+        self.image, self.label_df = new_image, new_label_df
 
     def CropNResize(self, TL_x, TL_y, BR_x, BR_y):
         """ Crop the image and label df and resize it to the original size. 
@@ -183,16 +202,17 @@ class DeepHemeAugmentor():
         # copy the label df
         new_label_df = self.label_df.copy()
 
-        # only keep the rows where center_x and center_y are between TL_x and BR_x and TL_y and BR_y respectively, note that the coordinates are relative to the original image
-        new_label_df = new_label_df[(new_label_df['center_x'] >= TL_x / self.width) & (new_label_df['center_x'] <= BR_x / self.width) & (new_label_df['center_y'] >= TL_y / self.height) & (new_label_df['center_y'] <= BR_y / self.height)]
+        if new_label_df is not None:
+            # only keep the rows where center_x and center_y are between TL_x and BR_x and TL_y and BR_y respectively, note that the coordinates are relative to the original image
+            new_label_df = new_label_df[(new_label_df['center_x'] >= TL_x / self.width) & (new_label_df['center_x'] <= BR_x / self.width) & (new_label_df['center_y'] >= TL_y / self.height) & (new_label_df['center_y'] <= BR_y / self.height)]
 
-        # get the width and height of the cropped image
-        new_label_df['center_x'] = (new_label_df['center_x'] - TL_x / self.width) / (BR_x / self.width - TL_x / self.width)
-        new_label_df['center_y'] = (new_label_df['center_y'] - TL_y / self.height) / (BR_y / self.height - TL_y / self.height)
+            # get the width and height of the cropped image
+            new_label_df['center_x'] = (new_label_df['center_x'] - TL_x / self.width) / (BR_x / self.width - TL_x / self.width)
+            new_label_df['center_y'] = (new_label_df['center_y'] - TL_y / self.height) / (BR_y / self.height - TL_y / self.height)
 
-        # rescale the width and height of the cropped image
-        new_label_df['box_width'] = new_label_df['box_width'] / ((BR_x - TL_x) / self.width)
-        new_label_df['box_height'] = new_label_df['box_height'] / ((BR_y - TL_y) / self.height)
+            # rescale the width and height of the cropped image
+            new_label_df['box_width'] = new_label_df['box_width'] / ((BR_x - TL_x) / self.width)
+            new_label_df['box_height'] = new_label_df['box_height'] / ((BR_y - TL_y) / self.height)
 
         # resize the image to the original size
         new_image = cv2.resize(new_image, (self.width, self.height))
@@ -203,22 +223,14 @@ class DeepHemeAugmentor():
 
         self.augmentation_sequence.append(augmentation_name)
 
-    def _check_Cutout_Blendout_eligibiity(self):
-        """ Check whether if Cutout or Blendout has never been applied before to the image, raise ValueError if so. 
-        Private method. """
-
-        for aug in self.augmentation_sequence:
-            if 'Cutout' in aug or 'Blendout' in aug:
-                return False
-
-        return True
+        self.image, self.label_df = new_image, new_label_df
 
     def Cutout(self, TL_x, TL_y, BR_x, BR_y, replacement_image_path=replacement_image_path):
         """ Cutout a portion of the image and label df, and replace it with a rectangle of same size cut out of a different image, with slight blending. 
         Preconditions: If Cutout or Blendout has already been applied before to the image, raise ValueError."""
 
         # check preconditions, raise ValueError if not met
-        if not self._check_Cutout_Blendout_eligibiity():
+        if not self._check_Cutout_Blendout_eligibility():
             raise ValueError('Cutout or Blendout has already been applied to the image.')
             
         # check preconditions, raise ValueError if not met
@@ -243,21 +255,24 @@ class DeepHemeAugmentor():
         # copy the label df
         new_label_df = self.label_df.copy()
 
-        # only keep the rows where center_x and center_y are between TL_x and BR_x and TL_y and BR_y respectively, note that the coordinates are relative to the original image
-        new_label_df = new_label_df[(new_label_df['center_x'] < TL_x / self.width) | (new_label_df['center_x'] > BR_x / self.width) | (new_label_df['center_y'] < TL_y / self.height) | (new_label_df['center_y'] > BR_y / self.height)]
+        if new_label_df is not None:
+            # only keep the rows where center_x and center_y are between TL_x and BR_x and TL_y and BR_y respectively, note that the coordinates are relative to the original image
+            new_label_df = new_label_df[(new_label_df['center_x'] < TL_x / self.width) | (new_label_df['center_x'] > BR_x / self.width) | (new_label_df['center_y'] < TL_y / self.height) | (new_label_df['center_y'] > BR_y / self.height)]
 
         # append the new image and label df to the sequence
         self.image_sequence[augmentation_name] = new_image
         self.label_sequence[augmentation_name] = new_label_df
 
         self.augmentation_sequence.append(augmentation_name)
+
+        self.image, self.label_df = new_image, new_label_df
     
     def Blendout(self, TL_x, TL_y, BR_x, BR_y, replacement_image_path=replacement_image_path):
         """ Cutout a portion of the image and label df, and replace it with a rectangle of same size cut out of a different image, with slight blending. 
         Preconditions: If Cutout or Blendout has already been applied before to the image, raise ValueError."""
 
         # check preconditions, raise ValueError if not met
-        if not self._check_Cutout_Blendout_eligibiity():
+        if not self._check_Cutout_Blendout_eligibility():
             raise ValueError('Cutout or Blendout has already been applied to the image.')
             
         # check preconditions, raise ValueError if not met
@@ -288,6 +303,7 @@ class DeepHemeAugmentor():
 
         self.augmentation_sequence.append(augmentation_name)
 
+        self.image, self.label_df = new_image, new_label_df
     
     ####################################################################################################
     # COLOR TRANSFORMATIONS
@@ -325,6 +341,8 @@ class DeepHemeAugmentor():
 
         self.augmentation_sequence.append(augmentation_name)
 
+        self.image, self.label_df = new_image, new_label_df
+
     def Saturation(self, alpha):
         """ Change the saturation of the image and label df.
         The alpha value for saturation has the following meaning:
@@ -358,6 +376,8 @@ class DeepHemeAugmentor():
         self.label_sequence[augmentation_name] = new_label_df
 
         self.augmentation_sequence.append(augmentation_name)
+
+        self.image, self.label_df = new_image, new_label_df
     
     def Hue(self, alpha):
         """ Change the hue of the image and label df.
@@ -393,6 +413,8 @@ class DeepHemeAugmentor():
 
         self.augmentation_sequence.append(augmentation_name)
 
+        self.image, self.label_df = new_image, new_label_df
+
     def ColorJitter(self, alpha):
         """ Change the contrast, saturation, and hue of the image and label df. 
         The alpha value for color jitter has the following meaning:
@@ -426,6 +448,8 @@ class DeepHemeAugmentor():
         self.label_sequence[augmentation_name] = new_label_df
 
         self.augmentation_sequence.append(augmentation_name)
+
+        self.image, self.label_df = new_image, new_label_df
 
 
     ####################################################################################################
@@ -463,6 +487,8 @@ class DeepHemeAugmentor():
         self.label_sequence[augmentation_name] = new_label_df
 
         self.augmentation_sequence.append(augmentation_name)
+
+        self.image, self.label_df = new_image, new_label_df
     
     def Blur(self, kernel_size):
         """ Blur the image and label df.
@@ -491,6 +517,8 @@ class DeepHemeAugmentor():
         self.label_sequence[augmentation_name] = new_label_df
 
         self.augmentation_sequence.append(augmentation_name)
+
+        self.image, self.label_df = new_image, new_label_df
     
     def Sharpen(self, kernel_size):
         """ Sharpen the image and label df.
@@ -520,6 +548,8 @@ class DeepHemeAugmentor():
         self.label_sequence[augmentation_name] = new_label_df
 
         self.augmentation_sequence.append(augmentation_name)
+
+        self.image, self.label_df = new_image, new_label_df
 
     def Noise(self, alpha):
         """ Add noise to the image and label df. 
@@ -558,6 +588,29 @@ class DeepHemeAugmentor():
         self.label_sequence[augmentation_name] = new_label_df
         
         self.augmentation_sequence.append(augmentation_name)
+
+        self.image, self.label_df = new_image, new_label_df
+
+
+    ####################################################################################################
+    # UTILITY METHODS
+    ####################################################################################################
+
+    def get_augmentations(self):
+        """ Return the augmentation sequence. """
+
+        return self.augmentation_sequence    
+
+
+    def get_original_image(self):
+        """ Get the original image. """
+            
+        return self.image_sequence['original']
+    
+    def get_original_label_df(self):
+        """ Get the original label df. """
+
+        return self.label_sequence['original']
     
     def show_most_recent(self, show_original=False):
         """ Show the most recent augmentation result. 
@@ -588,16 +641,289 @@ class DeepHemeAugmentor():
             cv2.waitKey(0)
         else:
             # Place the original image and the most recent augmentation side by side
-            original_img = self.image_sequence['original'].copy()
+            original_img = self.get_original_image().copy()
             original_img = Image.fromarray(original_img)
-            annotate_image(original_img, self.label_sequence['original'])
+            annotate_image(original_img, self.get_original_label_df())
             draw = ImageDraw.Draw(original_img)
             draw.text((0, 0), 'Original', (0, 0, 255))
             img = np.hstack((np.array(original_img), np.array(img)))
             cv2.imshow('Most Recent Augmentation', img)
             cv2.waitKey(0)
 
+    def save_most_recent_image(self, save_dir, show_original=False):
+        pass # TODO
 
+    ####################################################################################################
+    # CHECK PAST AUGMENTATIONS
+    ####################################################################################################
+
+    def _check_augmentation_eligibility(self, augmentation_name):
+        """ Check whether if augmentation_name has never been applied before to the image, raise ValueError if so. 
+        Private method. """
+
+        for aug in self.augmentation_sequence:
+            if augmentation_name in aug:
+                return False
+        
+        return True
+    
+    def _check_Cutout_Blendout_eligibility(self):
+        """ Check whether if Cutout or Blendout has never been applied before to the image, raise ValueError if so. 
+        Private method. """
+
+        return self._check_augmentation_eligibility('Cutout') and self._check_augmentation_eligibility('Blendout')
+
+    def _check_flip_eligibility(self):
+        """ Check whether if HFlip or VFlip has never been applied before to the image, raise ValueError if so. 
+        Private method. """
+
+        return self._check_augmentation_eligibility('HFlip') and self._check_augmentation_eligibility('VFlip')
+    
+    def _check_rotation_eligibility(self):
+        """ Check whether if Rot90, Rot180, or Rot270 has never been applied before to the image, raise ValueError if so. 
+        Private method. """
+
+        return self._check_augmentation_eligibility('Rot90') and self._check_augmentation_eligibility('Rot180') and self._check_augmentation_eligibility('Rot270')
+
+
+
+
+
+
+
+
+####################################################################################################
+# AN AUGMENTOR SUB CLASS THAT PERFORMS A RANDOM AUGMENTATION ON THE IMAGE AND LABEL DF
+####################################################################################################
+
+
+
+default_probs = [0.2/5, 0.2/5, 0.2/5, 0.2/5, 0.2/5, # HFlips, VFlips, Rot90, Rot180, Rot270
+                 0.4, # CropNResize
+                 0.2/2, 0.2/2, # Cutout, Blendout
+                 0.1/4, 0.1/4, 0.1/4, 0.1/4, # Contrast, Saturation, Hue, ColorJitter
+                 0.1/4, 0.1/4, 0.1/4, 0.1/4,] # Brightness, Blur, Sharpen, Noise
+
+class RandomAugmentor(DeepHemeAugmentor):
+    """ An augmentor that performs a random augmentation on the image and label df. 
+    A subclass of DeepHemeAugmentor.
+    Implements a random augmentation from the supported augmentation methods with randomized parameter. 
+
+    === Attributes ===
+    ... attributes from super class DeepHemeAugmentor ...
+    min_crop_prop: the minimum proportion of the width and height the crop must have
+    max_cutout_prop: the maximum proportion of the width and height that can be cutout
+    min_cutout_prop: the minimum proportion of the width and height that can be cutout
+    max_blendout_prop: the maximum proportion of the image that can be blendout
+    max_contrast_alpha: the maximum alpha value for contrast
+    min_contrast_alpha: the minimum alpha value for contrast
+    max_saturation_alpha: the maximum alpha value for saturation
+    min_saturation_alpha: the minimum alpha value for saturation
+    max_hue_alpha: the maximum alpha value for hue
+    min_hue_alpha: the minimum alpha value for hue
+    max_color_jitter_alpha: the maximum alpha value for color jitter
+    min_color_jitter_alpha: the minimum alpha value for color jitter
+    max_brightness_alpha: the maximum alpha value for brightness
+    min_brightness_alpha: the minimum alpha value for brightness
+    max_blur_kernel_size: the maximum kernel size for blurring
+    min_blur_kernel_size: the minimum kernel size for blurring
+    max_sharpen_kernel_size: the maximum kernel size for sharpening
+    min_sharpen_kernel_size: the minimum kernel size for sharpening
+    max_noise_alpha: the maximum alpha value for noise
+    min_noise_alpha: the minimum alpha value for noise
+
+    """
+
+    def __init__(self, image_path, label_path,
+                 max_crop_prop=0.8,
+                 min_crop_prop=0.5,
+                 max_cutout_prop=0.4,
+                 min_cutout_prop=0.2,
+                 max_blendout_prop=0.5,
+                 min_blendout_prop=0.3,
+                 max_contrast_alpha=1.3,
+                 min_contrast_alpha=0.7,
+                 max_saturation_alpha=1.3,
+                 min_saturation_alpha=0.7,
+                 max_hue_alpha=1.3,
+                 min_hue_alpha=0.7,
+                 max_color_jitter_alpha=1.3,
+                 min_color_jitter_alpha=0.7,
+                 max_brightness_alpha=1.3,
+                 min_brightness_alpha=0.7,
+                 max_blur_kernel_size=25,
+                 min_blur_kernel_size=5,
+                 max_sharpen_kernel_size=299,
+                 min_sharpen_kernel_size=99,
+                 max_noise_alpha=2,
+                 min_noise_alpha=1,
+                 probs=default_probs) -> None:
+        super().__init__(image_path, label_path)
+
+        # set the attributes
+        self.max_crop_prop = max_crop_prop
+        self.min_crop_prop = min_crop_prop
+        self.max_cutout_prop = max_cutout_prop
+        self.min_cutout_prop = min_cutout_prop
+        self.max_blendout_prop = max_blendout_prop
+        self.min_blendout_prop = min_blendout_prop
+        self.max_contrast_alpha = max_contrast_alpha
+        self.min_contrast_alpha = min_contrast_alpha
+        self.max_saturation_alpha = max_saturation_alpha
+        self.min_saturation_alpha = min_saturation_alpha
+        self.max_hue_alpha = max_hue_alpha
+        self.min_hue_alpha = min_hue_alpha
+        self.max_color_jitter_alpha = max_color_jitter_alpha
+        self.min_color_jitter_alpha = min_color_jitter_alpha
+        self.max_brightness_alpha = max_brightness_alpha
+        self.min_brightness_alpha = min_brightness_alpha
+        self.max_blur_kernel_size = max_blur_kernel_size
+        self.min_blur_kernel_size = min_blur_kernel_size
+        self.max_sharpen_kernel_size = max_sharpen_kernel_size
+        self.min_sharpen_kernel_size = min_sharpen_kernel_size
+        self.max_noise_alpha = max_noise_alpha
+        self.min_noise_alpha = min_noise_alpha
+        self.probs=probs
+
+    def _random_box_with_min(self, min_prop):
+        """ Return the TL_x, TL_y, BR_x, BR_y of a random box with minimum proportion of min_crop_prop, fitting inside self.image. """
+            
+        # get a random box with minimum proportion of min_crop_prop, fitting inside self.image
+        TL_x = random.randint(0, int((1 - min_prop) * self.width))
+        TL_y = random.randint(0, int((1 - min_prop) * self.height))
+        BR_x = random.randint(TL_x + int(min_prop * self.width), self.width)
+        BR_y = random.randint(TL_y + int(min_prop * self.height), self.height)
+
+        return TL_x, TL_y, BR_x, BR_y
+    
+    def _random_box_with_min_max(self, min_prop, max_prop):
+        """ Return the TL_x, TL_y, BR_x, BR_y of a random box with minimum proportion of min_crop_prop and maximum proportion of max_crop_prop, fitting inside self.image. """
+            
+        # get a random box with minimum proportion of min_crop_prop and maximum proportion of max_crop_prop, fitting inside self.image
+        TL_x = random.randint(0, int((1 - max_prop) * self.width))
+        TL_y = random.randint(0, int((1 - max_prop) * self.height))
+        BR_x = random.randint(TL_x + int(min_prop * self.width), TL_x + int(max_prop * self.width))
+        BR_y = random.randint(TL_y + int(min_prop * self.height), TL_y + int(max_prop * self.height))
+
+        return TL_x, TL_y, BR_x, BR_y
+
+    def augment(self):
+        """ Take a random sample from the supported augmentations and perform the augmentation. 
+        Do not allow the same augmentation to be performed twice """
+
+        # get a random augmentation from the supported augmentations that has not been applied before
+        unused_augmentations = [aug for aug in self.supported_augmentations if self._check_augmentation_eligibility(aug)]
+        usused_indices = [i for i in range(len(self.supported_augmentations)) if self._check_augmentation_eligibility(self.supported_augmentations[i])]
+
+        # renormalize the probabilities
+        new_probs = renormalize_probs(self.probs, usused_indices)
+
+        # weigh the random choice by the probabilities
+        augmentation = random.choices(unused_augmentations, weights=new_probs)[0]
+
+        if augmentation == 'HFlip':
+            if not self._check_flip_eligibility():
+                raise EligibilityError('HFlip has already been applied to the image.')
+            self.HFlip()
+
+        elif augmentation == 'VFlip':
+            if not self._check_flip_eligibility():
+                raise EligibilityError('VFlip has already been applied to the image.')
+            self.VFlip()
+
+        elif augmentation == 'Rot90':
+            if not self._check_rotation_eligibility():
+                raise EligibilityError('Rot90 has already been applied to the image.')
+            self.Rot90()
+
+        elif augmentation == 'Rot180':
+            if not self._check_rotation_eligibility():
+                raise EligibilityError('Rot180 has already been applied to the image.')
+            self.Rot180()
+
+        elif augmentation == 'Rot270':
+            if not self._check_rotation_eligibility():
+                raise EligibilityError('Rot270 has already been applied to the image.')
+            self.Rot270()
+
+        elif augmentation == 'CropNResize':
+            if not (self._check_augmentation_eligibility('CropNResize') and self._check_augmentation_eligibility('Cutout') and self._check_augmentation_eligibility('Blendout')):
+                raise EligibilityError('CropNResize not eligible.')
+            TL_x, TL_y, BR_x, BR_y = self._random_box_with_min_max(min_prop=self.min_crop_prop, max_prop=self.max_crop_prop)
+            self.CropNResize(TL_x, TL_y, BR_x, BR_y)
+
+        elif augmentation == 'Cutout':
+            if not (self._check_augmentation_eligibility('CropNResize') and self._check_augmentation_eligibility('Cutout') and self._check_augmentation_eligibility('Blendout')):
+                raise EligibilityError('CropNResize not eligible.')
+            TL_x, TL_y, BR_x, BR_y = self._random_box_with_min_max(min_prop=self.min_cutout_prop, max_prop=self.max_cutout_prop)
+            self.Cutout(TL_x, TL_y, BR_x, BR_y)
+
+        elif augmentation == 'Blendout':
+            if not (self._check_augmentation_eligibility('CropNResize') and self._check_augmentation_eligibility('Cutout') and self._check_augmentation_eligibility('Blendout')):
+                raise EligibilityError('CropNResize not eligible.')
+            TL_x, TL_y, BR_x, BR_y = self._random_box_with_min_max(min_prop=self.min_blendout_prop, max_prop=self.max_blendout_prop)
+            self.Blendout(TL_x, TL_y, BR_x, BR_y)
+
+        elif augmentation == 'Contrast':
+            if not self._check_augmentation_eligibility('Contrast'):
+                raise EligibilityError('Contrast has already been applied to the image.')
+            alpha = random.uniform(self.min_contrast_alpha, self.max_contrast_alpha)
+            self.Contrast(alpha)
+
+        elif augmentation == 'Saturation':
+            if not self._check_augmentation_eligibility('Saturation'):
+                raise EligibilityError('Saturation has already been applied to the image.')
+            
+            alpha = random.uniform(self.min_saturation_alpha, self.max_saturation_alpha)
+            self.Saturation(alpha)
+
+        elif augmentation == 'Hue':
+            if not self._check_augmentation_eligibility('Hue'):
+                raise EligibilityError('Hue has already been applied to the image.')
+            alpha = random.uniform(self.min_hue_alpha, self.max_hue_alpha)
+            self.Hue(alpha)
+
+        elif augmentation == 'ColorJitter':
+            if not self._check_augmentation_eligibility('ColorJitter'):
+                raise EligibilityError('ColorJitter has already been applied to the image.')
+            alpha = random.uniform(self.min_color_jitter_alpha, self.max_color_jitter_alpha)
+            self.ColorJitter(alpha)
+
+        elif augmentation == 'Brightness':
+            if not self._check_augmentation_eligibility('Brightness'):
+                raise EligibilityError('Brightness has already been applied to the image.')
+            alpha = random.uniform(self.min_brightness_alpha, self.max_brightness_alpha)
+            self.Brightness(alpha)
+
+        elif augmentation == 'Blur':
+            if not self._check_augmentation_eligibility('Blur') and self._check_augmentation_eligibility('Sharpen'):
+                raise EligibilityError('Blur or Sharpen has already been applied to the image.')
+            # get a random odd integer between min_blur_kernel_size and max_blur_kernel_size
+            kernel_size = random.randint(self.min_blur_kernel_size, self.max_blur_kernel_size)
+            if kernel_size % 2 == 0:
+                kernel_size += 1
+            self.Blur(kernel_size)
+
+        elif augmentation == 'Sharpen':
+            if not self._check_augmentation_eligibility('Blur') and self._check_augmentation_eligibility('Sharpen'):
+                raise EligibilityError('Blur or Sharpen has already been applied to the image.')
+            # get a random odd integer between min_sharpen_kernel_size and max_sharpen_kernel_size
+            kernel_size = random.randint(self.min_sharpen_kernel_size, self.max_sharpen_kernel_size)
+            if kernel_size % 2 == 0:
+                kernel_size += 1
+            self.Sharpen(kernel_size)
+
+        elif augmentation == 'Noise':
+            if not self._check_augmentation_eligibility('Noise'):
+                raise EligibilityError('Noise has already been applied to the image.')
+            alpha = random.uniform(self.min_noise_alpha, self.max_noise_alpha)
+            self.Noise(alpha)
+        else:
+            raise ValueError('Augmentation is not supported.')
+        
+class EligibilityError(Exception):
+    """ An exception raised when an augmentation is not eligible to be performed. """
+    pass
 
 ####################################################################################################
 # TESTING SCRIPT
@@ -607,8 +933,18 @@ if __name__ == '__main__':
     image_path = '/Users/neo/Documents/Research/DeepHeme/HemeYolo-dev/HemeYolo_data/6106_TL.jpg'
     label_path =  '/Users/neo/Documents/Research/DeepHeme/HemeYolo-dev/HemeYolo_data/6106_TL.txt'
 
-    augmentor = DeepHemeAugmentor(image_path, label_path)
+    augmentor = RandomAugmentor(image_path, label_path)
 
-    augmentor.CropNResize(100, 100, 400, 400)
+    augmentor.augment()
+
+    # while True: # continue on error in the case of a double cutout or blendout
+    #     try:
+    #         augmentor.augment()
+    #         break
+    #     except EligibilityError:
+    #         print('retrying')
+    #         continue
+
+    # augmentor.CropNResize(0, 0, 100, 100)
 
     augmentor.show_most_recent(show_original=True)
