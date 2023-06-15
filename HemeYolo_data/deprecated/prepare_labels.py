@@ -22,10 +22,6 @@ def complete_region_ids(partial_region_ids):
             if root + quad not in partial_region_ids:
                 partial_region_ids.append(root + quad)
 
-
-
-
-
 #############################################################################################
 # THE SCRIPT
 #############################################################################################
