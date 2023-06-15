@@ -1,5 +1,5 @@
 import argparse
-from HemeYolo_data.utils import cut_images_in_folder, _crop_csv, get_corners, _complete_region_ids
+from HemeYolo_data.crop import cut_images_in_folder, _crop_csv, _complete_region_ids
 import os
 import pandas as pd
 from tqdm import tqdm
@@ -40,7 +40,7 @@ group.add_argument('--crop_height', type=int, default=512,
 group = parser.add_argument_group('Hyperparameters')
 ####################################
 
-group.add_argument('--box_method', type=any, default='LBS',
+group.add_argument('--box_method', default='LBS',
                     help='Method to use to find the bounding box of the cell. Valid inputs are LBS (Laplacian Beam Search) and integers (fixed box radius).')
 
 args = parser.parse_args()
@@ -70,7 +70,7 @@ if __name__ == '__main__':
 
     # grab the pandas dataframe output from the _crop_csv function
 
-    df = _crop_csv(images_dir=os.path.join(args.output_dir, 'images'), csv_path=args.label_csv, crop_width=args.crop_width, crop_height=args.crop_height)
+    df = _crop_csv(images_dir=args.images_dir, csv_path=args.label_csv, crop_width=args.crop_width, crop_height=args.crop_height)
 
     # Sort by region_id
     df.sort_values('region_id', inplace=True)
@@ -85,7 +85,8 @@ if __name__ == '__main__':
 
         if args.box_method == 'LBS':
             # Obtain the laplacian mask
-            mask = laplace.laplace_boundary(os.path.join(args.output_dir, 'images', region_id + '.png'))
+            image_path = os.path.join(args.output_dir, 'images', region_id + '.jpg')
+            mask = laplace.laplace_boundary(image_path, prop_black=0.9, bins=128, dilation=3, verbose=False)
 
         if (df['region_id'] == region_id).any():
             # Filter dataframe by region_id
@@ -105,24 +106,34 @@ if __name__ == '__main__':
                 center_x_rel = row_dict['center_x'] / row_dict['region_width']
                 center_y_rel = row_dict['center_y'] / row_dict['region_height']
 
-                if type(args.box_method) is int:
-                    box_width_rel = args.box_method*2 / row_dict['region_width']
-                    box_height_rel = args.box_method*2 / row_dict['region_height']
+                try:
+                    box_method = int(args.box_method)
+                except ValueError:
+                    box_method = args.box_method
 
-                elif args.box_method == 'LBS':
+                if type(box_method) is int:
+                    box_width_rel = box_method*2 / row_dict['region_width']
+                    box_height_rel = box_method*2 / row_dict['region_height']
+
+                elif box_method == 'LBS':
                     # Grab the center as a numpy array
                     center = np.array([row_dict['center_x'], row_dict['center_y']])
-                    _, _, _, _, radius = LBS.get_box(center, mask, core_radius=5, density=10, cap=100, padding=5, lenience=0.1)
+                    _, _, _, _, distance_to_boundary = LBS.get_box(center, mask, core_radius=7, density=64, cap=64, padding=20, lenience=0.1)
+                    radius = distance_to_boundary + 20
                     box_width_rel = radius*2 / row_dict['region_width']
                     box_height_rel = radius*2 / row_dict['region_height']
+                
+                else:
+                    raise ValueError(f'Invalid box_method {args.box_method}')
         
                 # Append the class, center_x_rel, center_y_rel, box_width_rel, box_height_rel to the new_region_df as a new row
-                new_region_df = new_region_df.append({'class': cls, 
-                                                      'center_x_rel': center_x_rel, 
-                                                      'center_y_rel': center_y_rel, 
-                                                      'box_width_rel': box_width_rel, 
-                                                      'box_height_rel': box_height_rel},
-                                                      ignore_index=True)
+                new_df_row = pd.DataFrame({'class': [cls], 
+                                           'center_x_rel': [center_x_rel], 
+                                           'center_y_rel': [center_y_rel], 
+                                           'box_width_rel': [box_width_rel], 
+                                           'box_height_rel': [box_height_rel]})
+                
+                new_region_df = pd.concat([new_region_df, new_df_row], ignore_index=True)
                 
             # save the new_region_df as a txt file in the output_dir/labels, with the name {region_id}.txt, no header, no index
             new_region_df.to_csv(f'{args.output_dir}/labels/{region_id}.txt', header=False, index=False, sep='\t')
@@ -130,4 +141,5 @@ if __name__ == '__main__':
         else:
             # write an empty file named {region_id}.txt in the output_dir/labels
             with open(f'{args.output_dir}/labels/{region_id}.txt', 'w') as f:
+                # no content in the file but make sure the file exists
                 pass

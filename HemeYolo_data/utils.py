@@ -1,8 +1,21 @@
 import os
+import pandas as pd
 
-def get_label_as_df(label_path, label_type):
-    # TODO
-    pass
+def get_label_as_df(label_path):
+    """ Read the label file as a pandas dataframe. 
+    We are assuming the columns are in the following order: class, center_x, center_y, width, height. 
+    If the label file is empty, return None."""
+    
+    if os.stat(label_path).st_size == 0:
+        return None
+    
+    # open the label file as a pandas dataframe
+    df = pd.read_csv(label_path, sep='\t', header=None)
+
+    # rename the columns of df to class, center_x, center_y, width, height
+    df = df.rename(columns={0: 'class', 1: 'center_x', 2: 'center_y', 3: 'box_width', 4: 'box_height'})
+
+    return df
 
 def visualize_confidence():
     # TODO
@@ -21,12 +34,18 @@ def check_labels(images_dir, labels_dir):
     label_names = [os.path.basename(label_name) for label_name in label_names]
     label_names = [os.path.splitext(label_name)[0] for label_name in label_names]
 
+    missing = []
+
     # check that each image has a corresponding label
     for image_name in image_names:
         if image_name not in label_names:
-            return False
+            missing.append(image_name)
 
-    return True
+    # for each missing label, create an empty label file same name the image file with .txt extension
+    for image_name in missing:
+        with open(os.path.join(labels_dir, image_name + '.txt'), 'w') as f:
+            pass
+
 
 def enforce_image_extension(images_dir, extension='.jpg'):
     """ Go through each image in the image_dir with either extensions .jpg or .png and rename it to .jpg. """

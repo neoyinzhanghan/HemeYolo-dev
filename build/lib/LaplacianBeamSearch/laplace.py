@@ -22,7 +22,7 @@ def pixel_ecdf(img):
     pixels = img.flatten()
 
     # Calculate histogram (proportion of pixels at each intensity level)
-    hist, bin_edges = np.histogram(pixels, bins=256, range=(0,256), density=True)
+    hist, bin_edges = np.histogram(pixels, bins=128, range=(0,256), density=True)
 
     # Calculate cumulative sum to get empirical distribution function
     edf = np.cumsum(hist)
@@ -105,7 +105,6 @@ def laplace_boundary(image_path, prop_black= 0.9, bins=256, verbose=False, dilat
             print("KeyboardInterrupt")
             # end the program
             sys.exit()
-
 
     # denoise pmsf
     img = cv2.fastNlMeansDenoisingColored(pmsf, None, 10, 10, 7, 21)

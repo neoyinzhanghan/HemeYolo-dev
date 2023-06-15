@@ -118,7 +118,8 @@ if __name__ == '__main__':
                 elif box_method == 'LBS':
                     # Grab the center as a numpy array
                     center = np.array([row_dict['center_x'], row_dict['center_y']])
-                    _, _, _, _, radius = LBS.get_box(center, mask, core_radius=5, density=10, cap=100, padding=5, lenience=0.1)
+                    _, _, _, _, distance_to_boundary = LBS.get_box(center, mask, core_radius=7, density=64, cap=64, padding=20, lenience=0.1)
+                    radius = distance_to_boundary + 20
                     box_width_rel = radius*2 / row_dict['region_width']
                     box_height_rel = radius*2 / row_dict['region_height']
                 
@@ -140,4 +141,5 @@ if __name__ == '__main__':
         else:
             # write an empty file named {region_id}.txt in the output_dir/labels
             with open(f'{args.output_dir}/labels/{region_id}.txt', 'w') as f:
+                # no content in the file but make sure the file exists
                 pass

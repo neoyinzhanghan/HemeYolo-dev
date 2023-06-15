@@ -16,7 +16,7 @@ import pandas as pd
 
 # CROPPING IMAGES
 
-def cut_image_into_quadrants(img_path, quadrant_size=512):
+def cut_image_into_quadrants(img_path, crop_width=512, crop_height=512):
     """ Takes an image path and returns a tuple of 4 images, each cropped to a quadrant of the original image.
     The quadrants are defined as the top-left, top-right, bottom-left, and bottom-right quadrants,
     with corners stuck into the original image.
@@ -27,14 +27,14 @@ def cut_image_into_quadrants(img_path, quadrant_size=512):
     img = Image.open(img_path)
 
     # Verify image dimensions ### no need as the code is adaptive to size
-    if img.size[0] < quadrant_size or img.size[1] < quadrant_size:
-        raise ValueError(f"Image width and height must both be at least {quadrant_size} pixels, your image is {img.size[0]}x{img.size[1]} pixels!")
+    if img.size[0] < crop_width or img.size[1] < crop_height:
+        raise ValueError(f"Image width and height must both be at least {crop_width}x{crop_height} pixels respectively, your image is {img.size[0]}x{img.size[1]} pixels!")
 
     # Define box parameters (top-left, top-right, bottom-left, bottom-right)
-    box_TL = (0, 0, quadrant_size, quadrant_size)
-    box_TR = (img.size[0] - quadrant_size, 0, img.size[0], quadrant_size)
-    box_BL = (0, img.size[1]-quadrant_size, quadrant_size, img.size[1])
-    box_BR = (img.size[0] - quadrant_size, img.size[1]-quadrant_size, img.size[0], img.size[1])
+    box_TL = (0, 0, crop_width, crop_height)
+    box_TR = (img.size[0] - crop_width, 0, img.size[0], crop_height)
+    box_BL = (0, img.size[1]-crop_height, crop_width, img.size[1])
+    box_BR = (img.size[0] - crop_width, img.size[1]-crop_height, img.size[0], img.size[1])
 
     # Crop images and save
     img_TL = img.crop(box_TL)
@@ -45,7 +45,7 @@ def cut_image_into_quadrants(img_path, quadrant_size=512):
     # Return as tuple
     return (img_TL, img_TR, img_BL, img_BR)
 
-def cut_images_in_folder(input_folder, output_folder, quadrant_size=512):
+def cut_images_in_folder(images_dir, output_dir, crop_width=512, crop_height=512):
     """ Takes an input folder and an output folder and cuts all images in the input folder into quadrants,
     saving the quadrants in the output folder. The filenames are modified to include the quadrant code.
     The quadrant code is appended to the original filename separated by an underscore.
@@ -57,7 +57,7 @@ def cut_images_in_folder(input_folder, output_folder, quadrant_size=512):
     """
 
     # Get list of jpg files in the input folder
-    jpg_files = glob.glob(os.path.join(input_folder, '*.jpg'))
+    jpg_files = glob.glob(os.path.join(images_dir, '*.jpg'))
 
     # Iterate through each .jpg file in the input folder with a progress bar
     for img_path in tqdm(jpg_files, desc="Processing images"):
@@ -65,13 +65,13 @@ def cut_images_in_folder(input_folder, output_folder, quadrant_size=512):
         base_filename = os.path.basename(os.path.splitext(img_path)[0])
 
         # Apply the previous function
-        img_TL, img_TR, img_BL, img_BR = cut_image_into_quadrants(img_path, quadrant_size=quadrant_size)
+        img_TL, img_TR, img_BL, img_BR = cut_image_into_quadrants(img_path, crop_width=crop_width, crop_height=crop_height)
 
         # Save new images in the output folder with modified filenames
-        img_TL.save(os.path.join(output_folder, f"{base_filename}_TL.jpg"))
-        img_TR.save(os.path.join(output_folder, f"{base_filename}_TR.jpg"))
-        img_BL.save(os.path.join(output_folder, f"{base_filename}_BL.jpg"))
-        img_BR.save(os.path.join(output_folder, f"{base_filename}_BR.jpg"))
+        img_TL.save(os.path.join(output_dir, f"{base_filename}_TL.jpg"))
+        img_TR.save(os.path.join(output_dir, f"{base_filename}_TR.jpg"))
+        img_BL.save(os.path.join(output_dir, f"{base_filename}_BL.jpg"))
+        img_BR.save(os.path.join(output_dir, f"{base_filename}_BR.jpg"))
 
 
 # CROPPING LABELS
