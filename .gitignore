@@ -3,5 +3,9 @@
 build
 .egg-info
 HemeYolo_data/__pycache__
+HemeYolo_visual/__pycache__
+HemeYolo_testing/__pycache__
+HemeYolo_thresholding/__pycache__
+HemeYolo_YOLOv8/__pycache__
 LaplacianBeamSearch/__pycache__
 HemeYolo_data/deprecated
