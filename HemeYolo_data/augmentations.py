@@ -91,11 +91,13 @@ class DeepHemeAugmentor():
 
         # flip the image horizontally
         new_image = cv2.flip(self.image, 1)
-
-        new_label_df = self.label_df.copy()
-        if new_label_df is not None:
+        
+        if self.is_labelled():
+            new_label_df = self.label_df.copy()
             # flip the label df horizontally
             new_label_df['center_x'] = 1 - new_label_df['center_x']
+        else:
+            new_label_df = None
 
         # append the new image and label df to the sequence
         self.image_sequence['HFlip'] = new_image
@@ -111,10 +113,12 @@ class DeepHemeAugmentor():
         # flip the image vertically
         new_image = cv2.flip(self.image, 0)
 
-        if new_label_df is not None:
+        if self.is_labelled():
             # flip the label df vertically
             new_label_df = self.label_df.copy()
             new_label_df['center_y'] = 1 - new_label_df['center_y']
+        else:
+            new_label_df = None
 
         # append the new image and label df to the sequence
         self.image_sequence['VFlip'] = new_image
@@ -130,10 +134,12 @@ class DeepHemeAugmentor():
         # rotate the image 90 degrees clockwise
         new_image = cv2.rotate(self.image, cv2.ROTATE_90_CLOCKWISE)
 
-        new_label_df = self.label_df.copy()
-        if new_label_df is not None:
+        if self.is_labelled():
+            new_label_df = self.label_df.copy()
             # rotate the label df 90 degrees clockwise
             new_label_df['center_x'], new_label_df['center_y'] = 1 - new_label_df['center_y'], new_label_df['center_x']
+        else:
+            new_label_df = None
 
         # append the new image and label df to the sequence
         self.image_sequence['Rot90'] = new_image
@@ -149,10 +155,12 @@ class DeepHemeAugmentor():
         # rotate the image 180 degrees clockwise
         new_image = cv2.rotate(self.image, cv2.ROTATE_180)
 
-        new_label_df = self.label_df.copy()
-        if new_label_df is not None:
+        if self.is_labelled():
+            new_label_df = self.label_df.copy()
             # rotate the label df 180 degrees clockwise
             new_label_df['center_x'], new_label_df['center_y'] = 1 - new_label_df['center_x'], 1 - new_label_df['center_y']
+        else:
+            new_label_df = None
 
         # append the new image and label df to the sequence
         self.image_sequence['Rot180'] = new_image
@@ -168,10 +176,12 @@ class DeepHemeAugmentor():
         # rotate the image 270 degrees clockwise
         new_image = cv2.rotate(self.image, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
-        new_label_df = self.label_df.copy()
-        if new_label_df is not None:
+        if self.is_labelled():
+            new_label_df = self.label_df.copy()
             # rotate the label df 270 degrees clockwise
             new_label_df['center_x'], new_label_df['center_y'] = new_label_df['center_y'], 1 - new_label_df['center_x']
+        else:
+            new_label_df = None
 
         # append the new image and label df to the sequence
         self.image_sequence['Rot270'] = new_image
@@ -199,10 +209,11 @@ class DeepHemeAugmentor():
         # augmentation name is CropNResize_{TL_x}_{TL_y}_{BR_x}_{BR_y}
         augmentation_name = f'CropNResize_{TL_x}_{TL_y}_{BR_x}_{BR_y}'
 
-        # copy the label df
-        new_label_df = self.label_df.copy()
+        
 
-        if new_label_df is not None:
+        if self.is_labelled():
+            # copy the label df
+            new_label_df = self.label_df.copy()
             # only keep the rows where center_x and center_y are between TL_x and BR_x and TL_y and BR_y respectively, note that the coordinates are relative to the original image
             new_label_df = new_label_df[(new_label_df['center_x'] >= TL_x / self.width) & (new_label_df['center_x'] <= BR_x / self.width) & (new_label_df['center_y'] >= TL_y / self.height) & (new_label_df['center_y'] <= BR_y / self.height)]
 
@@ -213,6 +224,8 @@ class DeepHemeAugmentor():
             # rescale the width and height of the cropped image
             new_label_df['box_width'] = new_label_df['box_width'] / ((BR_x - TL_x) / self.width)
             new_label_df['box_height'] = new_label_df['box_height'] / ((BR_y - TL_y) / self.height)
+        else:
+            new_label_df = None
 
         # resize the image to the original size
         new_image = cv2.resize(new_image, (self.width, self.height))
@@ -252,12 +265,13 @@ class DeepHemeAugmentor():
         # augmentation name is Cutout_{TL_x}_{TL_y}_{BR_x}_{BR_y}
         augmentation_name = f'Cutout_{TL_x}_{TL_y}_{BR_x}_{BR_y}'
 
-        # copy the label df
-        new_label_df = self.label_df.copy()
-
-        if new_label_df is not None:
+        if self.is_labelled():
+            # copy the label df
+            new_label_df = self.label_df.copy()
             # only keep the rows where center_x and center_y are between TL_x and BR_x and TL_y and BR_y respectively, note that the coordinates are relative to the original image
             new_label_df = new_label_df[(new_label_df['center_x'] < TL_x / self.width) | (new_label_df['center_x'] > BR_x / self.width) | (new_label_df['center_y'] < TL_y / self.height) | (new_label_df['center_y'] > BR_y / self.height)]
+        else:
+            new_label_df = None
 
         # append the new image and label df to the sequence
         self.image_sequence[augmentation_name] = new_image
@@ -295,7 +309,10 @@ class DeepHemeAugmentor():
         augmentation_name = f'Cutout_{TL_x}_{TL_y}_{BR_x}_{BR_y}'
 
         # copy the label df, for blend out nothing is removed
-        new_label_df = self.label_df.copy()
+        if self.is_labelled():
+            new_label_df = self.label_df.copy()
+        else:
+            new_label_df = None
 
         # append the new image and label df to the sequence
         self.image_sequence[augmentation_name] = new_image
@@ -333,7 +350,10 @@ class DeepHemeAugmentor():
         augmentation_name = f'Contrast_{alpha}'
 
         # copy the label df
-        new_label_df = self.label_df.copy()
+        if self.is_labelled():
+            new_label_df = self.label_df.copy()
+        else:
+            new_label_df = None
 
         # append the new image and label df to the sequence
         self.image_sequence[augmentation_name] = new_image
@@ -369,7 +389,10 @@ class DeepHemeAugmentor():
         augmentation_name = f'Saturation_{alpha}'
 
         # copy the label df
-        new_label_df = self.label_df.copy()
+        if self.is_labelled():
+            new_label_df = self.label_df.copy()
+        else:
+            new_label_df = None
 
         # append the new image and label df to the sequence
         self.image_sequence[augmentation_name] = new_image
@@ -405,7 +428,10 @@ class DeepHemeAugmentor():
         augmentation_name = f'Hue_{alpha}'
 
         # copy the label df
-        new_label_df = self.label_df.copy()
+        if self.is_labelled():
+            new_label_df = self.label_df.copy()
+        else:
+            new_label_df = None
 
         # append the new image and label df to the sequence
         self.image_sequence[augmentation_name] = new_image
@@ -441,7 +467,10 @@ class DeepHemeAugmentor():
         augmentation_name = f'ColorJitter_{alpha}'
 
         # copy the label df
-        new_label_df = self.label_df.copy()
+        if self.is_labelled():
+            new_label_df = self.label_df.copy()
+        else:
+            new_label_df = None
 
         # append the new image and label df to the sequence
         self.image_sequence[augmentation_name] = new_image
@@ -480,7 +509,10 @@ class DeepHemeAugmentor():
         augmentation_name = f'Brightness_{alpha}'
 
         # copy the label df
-        new_label_df = self.label_df.copy()
+        if self.is_labelled():
+            new_label_df = self.label_df.copy()
+        else:
+            new_label_df = None
 
         # append the new image and label df to the sequence
         self.image_sequence[augmentation_name] = new_image
@@ -510,7 +542,10 @@ class DeepHemeAugmentor():
         augmentation_name = f'Blur_{kernel_size}'
 
         # copy the label df
-        new_label_df = self.label_df.copy()
+        if self.is_labelled():
+            new_label_df = self.label_df.copy()
+        else:
+            new_label_df = None
 
         # append the new image and label df to the sequence
         self.image_sequence[augmentation_name] = new_image
@@ -541,7 +576,10 @@ class DeepHemeAugmentor():
         augmentation_name = f'Sharpen_{kernel_size}'
 
         # copy the label df
-        new_label_df = self.label_df.copy()
+        if self.is_labelled():
+            new_label_df = self.label_df.copy()
+        else:
+            new_label_df = None
 
         # append the new image and label df to the sequence
         self.image_sequence[augmentation_name] = new_image
@@ -575,7 +613,10 @@ class DeepHemeAugmentor():
         augmentation_name = f'Noise_{alpha}'
 
         # copy the label df
-        new_label_df = self.label_df.copy()
+        if self.is_labelled():
+            new_label_df = self.label_df.copy()
+        else:
+            new_label_df = None
 
         # clip the image to be between 0 and 255
         new_image = np.clip(new_image, 0, 255)
@@ -596,6 +637,11 @@ class DeepHemeAugmentor():
     # UTILITY METHODS
     ####################################################################################################
 
+    def is_labelled(self):
+        """ Return whether the label df is not None. """
+
+        return self.label_df is not None
+    
     def get_augmentations(self):
         """ Return the augmentation sequence. """
 
@@ -650,8 +696,73 @@ class DeepHemeAugmentor():
             cv2.imshow('Most Recent Augmentation', img)
             cv2.waitKey(0)
 
-    def save_most_recent_image(self, save_dir, show_original=False):
-        pass # TODO
+    def save_most_recent_image(self, save_dir):
+        """ Save the most recent augmentation result, as a .jpg file in save_dir. """
+            
+        # Make a clone of the most recent image to annotate in place
+        most_recent_aug = self.augmentation_sequence[-1]
+
+        # Convert the image from BGR to RGB
+        rgb_img = self.image_sequence[most_recent_aug][..., ::-1]
+
+        # Now create the PIL Image
+        img = Image.fromarray(rgb_img)
+        
+        # Save the image
+        tag = '_' + '>>>'.join(self.augmentation_sequence[1:])
+        img.save(os.path.join(save_dir, self.name+f'{tag}.jpg'))
+
+    def save_most_recent_label_df(self, save_dir):
+        """ Save the most recent label df, as a \\t separated .txt file in save_dir. No header and index."""
+
+        # Make a clone of the most recent label df to annotate in place
+        most_recent_aug = self.augmentation_sequence[-1]
+
+        if self.is_labelled():
+            # Save the label df
+            tag = '_' + '>>>'.join(self.augmentation_sequence[1:])
+            self.label_sequence[most_recent_aug].to_csv(os.path.join(save_dir, f'{tag}.txt'), sep='\t', index=False, header=False)
+        else:
+            # Write an empty txt file
+            tag = '_' + '>>>'.join(self.augmentation_sequence[1:])
+            with open(os.path.join(save_dir, self.name+f'{tag}.txt'), 'w') as f:
+                pass
+
+    def save_original_image(self, save_dir):
+        """ Save the original image, as a .jpg file in save_dir. """
+            
+        # Convert the image from BGR to RGB
+        rgb_img = self.image_sequence['original'][..., ::-1]
+
+        # Now create the PIL Image
+        img = Image.fromarray(rgb_img)
+        
+        # Save the image
+        tag = '_original'
+        img.save(os.path.join(save_dir, self.name+f'{tag}.jpg'))
+
+    def save_original_label_df(self, save_dir):
+        """ Save the original label df, as a \\t separated .txt file in save_dir. No augmentation sequence is added. No header and index."""
+
+        # Make a clone of the most recent label df to annotate in place
+        label = self.label_sequence['original']
+
+        if self.is_labelled():
+            # Save the label df
+            tag = '_original'
+            label.to_csv(os.path.join(save_dir, f'{tag}.txt'), sep='\t', index=False, header=False)
+        else:
+            # Write an empty txt file
+            tag = '_original'
+            with open(os.path.join(save_dir, self.name+f'{tag}.txt'), 'w') as f:
+                pass
+
+    def clear_augmentations(self):
+        """ Clear the augmentation sequence. """
+
+        self.augmentation_sequence = self.augmentation_sequence[:1]
+        self.image, self.label_df = self.image_sequence['original'], self.label_sequence['original']
+
 
     ####################################################################################################
     # CHECK PAST AUGMENTATIONS
@@ -920,7 +1031,22 @@ class RandomAugmentor(DeepHemeAugmentor):
             self.Noise(alpha)
         else:
             raise ValueError('Augmentation is not supported.')
-        
+    
+    def augment_n_times(self, n, continue_on_error=False):
+        """ Apply the augmentation function n times. 
+        You might want to turn on continue_on_error, which may end up in infinite loops of EligibilityError
+        """
+
+        for i in range(n):
+            try:
+                self.augment()
+            except EligibilityError:
+                if continue_on_error:
+                    continue
+                else:
+                    raise EligibilityError('Augmentation is not eligible. You are applying the same augmentation multiple times. The augmentation sampler is random,'+
+                                        ' so if you want the program to continue sampling, turn on continue_on_error=True.')
+
 class EligibilityError(Exception):
     """ An exception raised when an augmentation is not eligible to be performed. """
     pass

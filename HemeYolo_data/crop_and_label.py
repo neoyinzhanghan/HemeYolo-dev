@@ -1,5 +1,6 @@
 import argparse
 from HemeYolo_data.crop import cut_images_in_folder, _crop_csv, _complete_region_ids
+from HemeYolo_data.utils import check_labels, enforce_image_extension
 import os
 import pandas as pd
 from tqdm import tqdm
@@ -118,7 +119,7 @@ if __name__ == '__main__':
                 elif box_method == 'LBS':
                     # Grab the center as a numpy array
                     center = np.array([row_dict['center_x'], row_dict['center_y']])
-                    _, _, _, _, distance_to_boundary = LBS.get_box(center, mask, core_radius=7, density=64, cap=64, padding=20, lenience=0.1)
+                    _, _, _, _, distance_to_boundary = LBS.get_box(center, mask, core_radius=7, density=64, cap=64, padding=25, lenience=0.1)
                     radius = distance_to_boundary + 20
                     box_width_rel = radius*2 / row_dict['region_width']
                     box_height_rel = radius*2 / row_dict['region_height']
@@ -143,3 +144,7 @@ if __name__ == '__main__':
             with open(f'{args.output_dir}/labels/{region_id}.txt', 'w') as f:
                 # no content in the file but make sure the file exists
                 pass
+        
+    # first make sure that the images all have corresponding labels
+    check_labels(os.path.join(args.output_dir, 'images'), os.path.join(args.output_dir, 'labels'))
+    enforce_image_extension(os.path.join(args.output_dir, 'images'))
