@@ -2,3 +2,6 @@
 .vscode
 build
 .egg-info
+HemeYolo_data/__pycache__
+LaplacianBeamSearch/__pycache__
+HemeYolo_data/deprecated
