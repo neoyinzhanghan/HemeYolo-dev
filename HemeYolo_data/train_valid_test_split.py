@@ -123,7 +123,7 @@ if __name__ == '__main__':
     """path:  (dataset directory path)
     train: (Complete path to dataset train folder)
     test: (Complete path to dataset test folder) 
-    valid: (Complete path to dataset valid folder)
+    val: (Complete path to dataset valid folder)
 
     nc: 1
 
@@ -134,6 +134,6 @@ if __name__ == '__main__':
         f.write('path: ' + args.output_dir + '\n')
         f.write('train: ' + os.path.join(args.output_dir, 'train') + '\n')
         f.write('test: ' + os.path.join(args.output_dir, 'test') + '\n')
-        f.write('valid: ' + os.path.join(args.output_dir, 'valid') + '\n')
+        f.write('val: ' + os.path.join(args.output_dir, 'valid') + '\n')
         f.write('nc: 1\n')
         f.write("names: ['WBC']\n")
