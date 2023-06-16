@@ -260,6 +260,9 @@ class DeepHemeAugmentor():
         # replace the cutout portion with the replacement image, make sure to blend the edges
         # It is as if the replacement image is translucent and pasted on top of the original image
         cover_opacity = random.uniform(0.6, 0.9) # this is the opacity of the replacement image
+        if cv2.imread(replacement_image_path) is None:
+            raise ValueError('replacement_image_path is invalid.')  
+        
         new_image[TL_y:BR_y, TL_x:BR_x] = cv2.addWeighted(new_image[TL_y:BR_y, TL_x:BR_x], 1 - cover_opacity, cv2.imread(replacement_image_path)[TL_y:BR_y, TL_x:BR_x], cover_opacity, 0)
 
         # augmentation name is Cutout_{TL_x}_{TL_y}_{BR_x}_{BR_y}
@@ -303,6 +306,10 @@ class DeepHemeAugmentor():
         # replace the cutout portion with the replacement image, make sure to blend the edges
         # It is as if the replacement image is translucent and pasted on top of the original image
         cover_opacity = random.uniform(0.1, 0.4) # this is the opacity of the replacement image
+
+        if cv2.imread(replacement_image_path) is None:
+            raise ValueError('replacement_image_path is invalid.')
+        
         new_image[TL_y:BR_y, TL_x:BR_x] = cv2.addWeighted(new_image[TL_y:BR_y, TL_x:BR_x], 1 - cover_opacity, cv2.imread(replacement_image_path)[TL_y:BR_y, TL_x:BR_x], cover_opacity, 0)
 
         # augmentation name is Cutout_{TL_x}_{TL_y}_{BR_x}_{BR_y}
