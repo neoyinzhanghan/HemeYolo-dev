@@ -57,7 +57,6 @@ if __name__ == '__main__':
     # Sort by region_id
     df.sort_values('region_id', inplace=True)
 
-
     # Complete the region_id to contain all TL, TR, BL, BR regions.
     region_ids = list(df['region_id'].unique())
     complete_region_ids(region_ids)

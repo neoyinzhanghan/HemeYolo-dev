@@ -6,7 +6,7 @@ import pandas as pd
 import os
 from tqdm import tqdm
 
-def distance_to_nearest_white_pixel(dir_vec, base_pt, mask, cap=100):
+def distance_to_nearest_white_pixel(dir_vec, base_pt, mask, cap=64):
     """ Mask is a 2d numpy array representing a picture, and the base_pt is a np.array (x,y) representing the starting point,
     and dir_vec is a np.array [x, y] representing the direction vector. This function returns the distance from the base_pt 
     to the farthest white pixel in the direction of dir_vec. The unit is the number of pixels. 
@@ -57,7 +57,7 @@ def get_dir_vecs(density):
 
     return dir_vecs
 
-def get_distance_to_boundary(center, mask, core_radius=5, density=10, cap=100, lenience=0.1):
+def get_distance_to_boundary(center, mask, core_radius=7, density=64, cap=64, lenience=0.1):
     """ The distance to boundary is computed as follow. 
     First, we generate a list of direction vectors based on the density. 
     Then, we compute the distance to the farthest white pixel in each direction, from the point center + core_radius * direction (normalized). 
@@ -104,7 +104,7 @@ def get_distance_to_boundary(center, mask, core_radius=5, density=10, cap=100, l
 
     return min_distance + core_radius
 
-def get_box(center, mask, core_radius=5, density=10, cap=100, padding=5, lenience=0.1):
+def get_box(center, mask, core_radius=7, density=64, cap=64, padding=20, lenience=0.1): 
     """ Return the TL_x, TL_y, BR_x, BR_y of a box centered at center. 
     The box is the smallest box containing a circle of a radius that is equal to the distance to the boundary plus padding. """
     
@@ -134,7 +134,7 @@ def get_box(center, mask, core_radius=5, density=10, cap=100, padding=5, lenienc
     return TL_x, TL_y, BR_x, BR_y, distance_to_boundary
 
 
-def LBS_visualization(image_path, label_path, core_radius=3, density=32, cap=64, padding=15, lenience=0.1, dilation=3):
+def LBS_visualization(image_path, label_path, core_radius=7, density=64, cap=64, padding=20, lenience=0.1, dilation=3):
     """ This function takes the image_path, parse out each of the centers in the label file in the label_path,
     and then call the get_box function to get the TL_x, TL_y, BR_x, BR_y of the box for each center,
     and then use the TL_x, TL_y, BR_x, BR_y to annotate the image. """
