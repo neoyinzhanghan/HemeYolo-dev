@@ -25,7 +25,8 @@ The following augmentations are supported:
         - Contrast
         - Saturation
         - Hue
-        - ColorJitterI want you
+        - ColorJitter
+    - Non-color transformations
         - Brightness
         - Blur
         - Sharpen
@@ -260,7 +261,7 @@ class DeepHemeAugmentor():
         # replace the cutout portion with the replacement image, make sure to blend the edges
         # It is as if the replacement image is translucent and pasted on top of the original image
         cover_opacity = random.uniform(0.6, 0.9) # this is the opacity of the replacement image
-        
+
         if cv2.imread(replacement_image_path) is None:
             raise ValueError(f'replacement_image_path {replacement_image_path}is invalid.')
         
