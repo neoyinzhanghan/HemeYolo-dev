@@ -50,8 +50,10 @@ if __name__ == '__main__':
 
     for image_path in tqdm(images):
         
-        # grab the image from the image_path as a np array
-        image = cv2.imread(image_path)
+        # # grab the image from the image_path as a np array
+        # image = cv2.imread(image_path)
+
+        print(image_path)
 
         result = model([image])[0]
 
