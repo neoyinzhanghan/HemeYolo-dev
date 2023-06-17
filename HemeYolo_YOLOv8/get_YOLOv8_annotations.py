@@ -69,7 +69,7 @@ if __name__ == '__main__':
         if probs is None:
             # write an empty txt file
             df.to_csv(os.path.join(args.output_folder, os.path.basename(image_path).split('.')[0] + '.txt'), header=False, index=False, sep='\t')
-            break
+            continue
 
         l1 = len(boxes)
         print(boxes)
