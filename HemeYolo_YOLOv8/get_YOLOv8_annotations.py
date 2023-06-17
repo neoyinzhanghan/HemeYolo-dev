@@ -55,7 +55,7 @@ if __name__ == '__main__':
 
         print(image_path)
 
-        result = model([image])[0]
+        result = model([image_path])[0]
 
         boxes = result.boxes  # Boxes object for bbox outputs
         probs = result.probs  # Class probabilities for classification outputs
