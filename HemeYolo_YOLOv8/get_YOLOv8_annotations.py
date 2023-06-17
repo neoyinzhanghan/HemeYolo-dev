@@ -57,7 +57,6 @@ if __name__ == '__main__':
 
         result = model([image])[0]
 
-
         boxes = result.boxes  # Boxes object for bbox outputs
         probs = result.probs  # Class probabilities for classification outputs
 
@@ -66,6 +65,11 @@ if __name__ == '__main__':
         ### Assuming that box is in the format [TL_x, TL_y, BR_x, BR_y]
 
         df = pd.DataFrame(columns=['TL_x', 'TL_y', 'BR_x', 'BR_y', 'probability', 'class'])
+
+        if probs is None:
+            # write an empty txt file
+            df.to_csv(os.path.join(args.output_folder, os.path.basename(image_path).split('.')[0] + '.txt'), header=False, index=False, sep='\t')
+            break
 
         l1 = len(boxes)
         print(boxes)
@@ -85,4 +89,4 @@ if __name__ == '__main__':
             df = pd.concat([df, pd.DataFrame([[TL_x, TL_y, BR_x, BR_y, prob, 0]], columns=['TL_x', 'TL_y', 'BR_x', 'BR_y', 'probability', 'class'])])
 
         # Save the dataframe as a .txt, no header and no index, and no column name, nothing, separated by \t
-        df.to_csv(os.path.join(args.output_folder, os.path.basename(result.imgs[0]).split('.')[0] + '.txt'), header=False, index=False, sep='\t')
+        df.to_csv(os.path.join(args.output_folder, os.path.basename(image_path).split('.')[0] + '.txt'), header=False, index=False, sep='\t')
