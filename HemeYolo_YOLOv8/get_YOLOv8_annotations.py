@@ -4,6 +4,7 @@ import argparse
 import glob
 import pandas as pd
 from tqdm import tqdm
+import cv2
 
 #############################################################################################
 # THE SCRIPT
@@ -47,7 +48,10 @@ if __name__ == '__main__':
     print('Grabbing image paths...')
     images = glob.glob(os.path.join(args.data_folder, '*.jpg')) + glob.glob(os.path.join(args.data_folder, '*.png'))
 
-    for image in tqdm(images):
+    for image_path in tqdm(images):
+        
+        # grab the image from the image_path as a np array
+        image = cv2.imread(image_path)
 
         result = model([image])[0]
 
@@ -62,7 +66,9 @@ if __name__ == '__main__':
         df = pd.DataFrame(columns=['TL_x', 'TL_y', 'BR_x', 'BR_y', 'probability', 'class'])
 
         l1 = len(boxes)
+        print(boxes)
         l2 = len(probs)
+        print(probs)
 
         if l2 != l1:
             raise ValueError('The number of boxes (got {l1}) and the number of probabilities (got {l2}) are not equal!')
