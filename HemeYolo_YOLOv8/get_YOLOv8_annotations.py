@@ -51,9 +51,8 @@ if __name__ == '__main__':
 
         result = model([image])[0]
 
-        print(boxes)
+
         boxes = result.boxes  # Boxes object for bbox outputs
-        print(probs)
         probs = result.probs  # Class probabilities for classification outputs
 
         ### Start a pandas dataframe to store the result, saving each box and corresponding probability as a row
