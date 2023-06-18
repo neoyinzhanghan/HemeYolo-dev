@@ -39,7 +39,7 @@ if __name__ == '__main__':
 
     # Load the YOLO model
     print('Loading model...')
-    model = YOLO(args.chkpt_path, conf_thres=0)
+    model = YOLO(args.chkpt_path)
 
     # Get a list of all the images in the data_folder with file extensions .jpg and .png
     # The glob.glob() function returns a list of paths matching a pathname pattern
@@ -55,7 +55,7 @@ if __name__ == '__main__':
 
         # print(image_path)
 
-        result = model([image_path])[0]
+        result = model([image_path], conf_thres=0)[0]
 
         boxes = result.boxes.data  # Boxes object for bbox outputs
 
