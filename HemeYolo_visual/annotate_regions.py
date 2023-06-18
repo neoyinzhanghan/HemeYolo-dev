@@ -77,9 +77,9 @@ if __name__ == '__main__':
     ####################################
 
     group.add_argument('--input_dir', type=str,
-                        help='Directory or directories containing input csv')
+                        help='Directory or directories containing input images')
     group.add_argument('--labels_dir', type=str,
-                        help='Directory or directories to save output labels')  
+                        help='Directory or directories containing input labels')  
     group.add_argument('--output_dir', type=str,
                         help='Directory or directories to save output annotated images')  
     group.add_argument('--label_type', type=str, default='center-width-height',
