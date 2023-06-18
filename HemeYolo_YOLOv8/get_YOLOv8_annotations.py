@@ -57,7 +57,9 @@ if __name__ == '__main__':
 
         result = model([image_path])[0]
 
-        boxes = result.data  # Boxes object for bbox outputs
+        boxes = result.boxes  # Boxes object for bbox outputs
+
+        print(boxes)
 
         ### Start a pandas dataframe to store the result, saving each box and corresponding probability as a row
         ### The row is just concatenated to the dataframe. Each row is the just the box and the probability, and a dummie class index 0
