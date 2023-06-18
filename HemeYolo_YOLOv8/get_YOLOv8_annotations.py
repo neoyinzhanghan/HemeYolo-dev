@@ -57,7 +57,7 @@ if __name__ == '__main__':
 
         result = model([image_path])[0]
 
-        boxes = result.boxes  # Boxes object for bbox outputs
+        boxes = result.boxes.data  # Boxes object for bbox outputs
 
         print(boxes)
 
