@@ -37,6 +37,9 @@ if __name__ == '__main__':
 
     group.add_argument('--conf_thres', type=float, default=0,
                        help='Confidence threshold for predictions')
+    
+    group.add_argument('--verbose', type=bool, default=False,
+                       help='Whether or not you want the program to print a bunch of stuff that help you debug.')
 
 
     args = parser.parse_args()
@@ -63,7 +66,8 @@ if __name__ == '__main__':
 
         boxes = result.boxes.data  # Boxes object for bbox outputs
 
-        print(boxes)
+        if args.verbose:
+            print(boxes)
 
         ### Start a pandas dataframe to store the result, saving each box and corresponding probability as a row
         ### The row is just concatenated to the dataframe. Each row is the just the box and the probability, and a dummie class index 0
@@ -78,7 +82,7 @@ if __name__ == '__main__':
 
             TL_x, TL_y = int(box[0]), int(box[1])
             BR_x, BR_y = int(box[2]), int(box[3])
-            conf = box[4]
+            conf = float(box[4])
             cls = int(box[5])
 
             # use pd.concat instead of append to avoid deprecation
