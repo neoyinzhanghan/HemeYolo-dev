@@ -82,8 +82,8 @@ class DeepHemeAugmentor():
         self.height = self.image.shape[0]
 
         self.supported_augmentations = ['HFlip', 'VFlip', 'Rot90', 'Rot180', 'Rot270', 'CropNResize', 'Cutout', 'Blendout', 'Contrast', 'Saturation', 'Hue', 'ColorJitter', 'Brightness', 'Blur', 'Sharpen', 'Noise']
-        self.name = os.path.basename(os.path.splitext(image_path)[0])
 
+        
     ####################################################################################################
     # GEOMETRIC TRANSFORMATIONS
     ####################################################################################################
