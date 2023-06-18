@@ -40,7 +40,7 @@ The following augmentations are supported:
 
 # The replacement image path is named clot.jpg and is located in the exact same folder as this python file
 # Make sure it works on all devices by using os.path.dirname(__file__)
-replacement_image_path = "/home/dog/neo/HemeYolo-dev/HemeYolo_data/clot.jpg"
+replacement_image_path = "/home/dog/neo/HemeYolo-dev/HemeYolo_data/clot.jpg" # TODO Deprecated need to change
 
 class DeepHemeAugmentor():
     """ DeepHemeAugmentor class that contains all the augmentation methods, an original image, and original label df, and their augmentation sequences.
@@ -82,6 +82,7 @@ class DeepHemeAugmentor():
         self.height = self.image.shape[0]
 
         self.supported_augmentations = ['HFlip', 'VFlip', 'Rot90', 'Rot180', 'Rot270', 'CropNResize', 'Cutout', 'Blendout', 'Contrast', 'Saturation', 'Hue', 'ColorJitter', 'Brightness', 'Blur', 'Sharpen', 'Noise']
+        self.name = os.path.basename(os.path.splitext(image_path)[0])
 
     ####################################################################################################
     # GEOMETRIC TRANSFORMATIONS
@@ -730,7 +731,7 @@ class DeepHemeAugmentor():
         if self.is_labelled():
             # Save the label df
             tag = '_' + '>>>'.join(self.augmentation_sequence[1:])
-            self.label_sequence[most_recent_aug].to_csv(os.path.join(save_dir, f'{tag}.txt'), sep='\t', index=False, header=False)
+            self.label_sequence[most_recent_aug].to_csv(os.path.join(save_dir, self.name+f'{tag}.txt'), sep='\t', index=False, header=False)
         else:
             # Write an empty txt file
             tag = '_' + '>>>'.join(self.augmentation_sequence[1:])
@@ -759,7 +760,7 @@ class DeepHemeAugmentor():
         if self.is_labelled():
             # Save the label df
             tag = '_original'
-            label.to_csv(os.path.join(save_dir, f'{tag}.txt'), sep='\t', index=False, header=False)
+            label.to_csv(os.path.join(save_dir, self.name+f'{tag}.txt'), sep='\t', index=False, header=False)
         else:
             # Write an empty txt file
             tag = '_original'
