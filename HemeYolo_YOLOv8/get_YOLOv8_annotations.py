@@ -80,8 +80,8 @@ if __name__ == '__main__':
         for i in range(l1):
             box = boxes[i]
 
-            BR_x, BR_y = int(box[0]), int(box[1])
-            TL_x, TL_y = int(box[2]), int(box[3])
+            BR_y, BR_x = int(box[0]), int(box[1])
+            TL_y, TL_x = int(box[2]), int(box[3])
             conf = float(box[4])
             cls = int(box[5])
 
