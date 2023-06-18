@@ -40,7 +40,7 @@ The following augmentations are supported:
 
 # The replacement image path is named clot.jpg and is located in the exact same folder as this python file
 # Make sure it works on all devices by using os.path.dirname(__file__)
-replacement_image_path = os.path.join(os.path.dirname(__file__), 'clot.jpg')
+replacement_image_path = "/home/dog/neo/HemeYolo-dev/HemeYolo_data/clot.jpg"
 
 class DeepHemeAugmentor():
     """ DeepHemeAugmentor class that contains all the augmentation methods, an original image, and original label df, and their augmentation sequences.
