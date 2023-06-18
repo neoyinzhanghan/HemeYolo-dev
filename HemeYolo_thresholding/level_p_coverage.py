@@ -1,34 +1,10 @@
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
+from HemeYolo_thresholding.calculate_iou import bb_intersection_over_union
+from tqdm import tqdm
 
-def _calculate_iou(box1, box2):
-    """ Assume that box1 is an array of [TL_x, TL_y, BR_x, BR_y] and box2 is an array of [TL_x, TL_y, BR_x, BR_y],
-    Both have be in relative coordinates. """
-    
-    # Check the relationship between TL and BR coordinates, if not correct, raise a ValueError
-    if box1[0] > box1[2] or box1[1] > box1[3]:
-        raise ValueError(f"Box1 coordinates {box1} are not in the correct format")
-    if box2[0] > box2[2] or box2[1] > box2[3]:
-        raise ValueError(f"Box2 coordinates {box2} are not in the correct format")
-    
-    # Calculate the area of the intersection
-    intersection_area = (min(box1[2], box2[2]) - max(box1[0], box2[0])) * (min(box1[3], box2[3]) - max(box1[1], box2[1]))
-    print(intersection_area)
-
-    # Calculate the area of the union
-    union_area = (box1[2] - box1[0]) * (box1[3] - box1[1]) + (box2[2] - box2[0]) * (box2[3] - box2[1]) - intersection_area
-    print(union_area)
-
-    print(box1)
-    print(box2)
-
-    # Calculate the iou
-    iou = intersection_area / union_area
-
-    return iou
-
-def level_p_coverage(label_path, output_path, conf_level=0, iou_level=0.75, region_width=512, region_height=512):
+def level_p_coverage(label_path, output_path, conf_level=0, iou_level=0.50, region_width=512, region_height=512):
     """ For every box in the label_path, check if it is covered by a box in the output_path. For a given box ...
     Traverse through all boxes in the file of the output_path with confidence above conf_level, convert to relative coordinates using region_width and region_height,
     if the box in the output path has an iou with the box in label_path above iou_level, then increment the coverage counter by 1.
@@ -75,7 +51,7 @@ def level_p_coverage(label_path, output_path, conf_level=0, iou_level=0.75, regi
             output_box = [row["TL_x"], row["TL_y"], row["BR_x"], row["BR_y"]]
 
             # calculate the iou between the two boxes
-            iou = _calculate_iou(label_box, output_box)
+            iou = bb_intersection_over_union(label_box, output_box)
 
             # if the iou is above iou_level, increment the coverage counter by 1
             if iou > iou_level:
@@ -87,8 +63,8 @@ def level_p_coverage(label_path, output_path, conf_level=0, iou_level=0.75, regi
 
 if __name__ == "__main__":
 
-    labels_dir = "/Users/neo/Documents/Research/DeepHeme/HemeYolo_data/data3/split/valid/labels"
-    outputs_dir = "/Users/neo/Documents/Research/DeepHeme/HemeYolo_data/data3/split/valid/YOLO_outputs"
+    labels_dir = "/Users/neo/Documents/Research/DeepHeme/HemeYolo_data/data2/labels"
+    outputs_dir = "/Users/neo/Documents/Research/DeepHeme/HemeYolo_data/data2/HemeYolo_annotations"
 
     # Get a list of label_path in the labels_dir with extension .txt
     # Get a list of output_path in the outputs_dir with extension .txt
@@ -103,7 +79,7 @@ if __name__ == "__main__":
 
     boxes_count = []
 
-    for i in range(len(label_paths)):
+    for i in tqdm(range(len(label_paths))):
         # Get the label_path and output_path
         label_path = label_paths[i]
         output_path = output_paths[i]
@@ -128,14 +104,6 @@ if __name__ == "__main__":
 
     # Calculate the region level average coverage
     region_level_average_coverage = sum(coverage_list) / len(coverage_list)
-
-    # Calculate the cell_level coverage
-    for label_path in label_paths:
-        # Read in the label_path file as a pandas data frame, rename the columns as [class, center_x, center_y, box_width, box_height]
-        label_df = pd.read_csv(label_path, sep="\t", header=None)
-        label_df.columns = ["class", "center_x", "center_y", "box_width", "box_height"]
-
-        boxes_count.append(len(label_df))
 
     # Use the boxes_count to get a weighted average of the coverage_list
     weighted_average_coverage = sum([coverage_list[i] * boxes_count[i] for i in range(len(coverage_list))]) / sum(boxes_count)

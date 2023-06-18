@@ -62,7 +62,7 @@ if __name__ == '__main__':
 
         # print(image_path)
 
-        result = model([image_path], conf=0)[0]
+        result = model([image_path], conf=args.conf_thres)[0]
 
         boxes = result.boxes.data  # Boxes object for bbox outputs
 
