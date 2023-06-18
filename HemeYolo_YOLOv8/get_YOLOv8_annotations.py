@@ -71,22 +71,22 @@ if __name__ == '__main__':
 
         ### Start a pandas dataframe to store the result, saving each box and corresponding probability as a row
         ### The row is just concatenated to the dataframe. Each row is the just the box and the probability, and a dummie class index 0
-        ### Assuming that box is in the format [BR_x, BR_y, TL_x, TL_y, confidence, class]
+        ### Assuming that box is in the format ['TL_x', 'TL_y', 'BR_x', 'BR_y', 'confidence', 'class']
 
-        df = pd.DataFrame(columns=['BR_x', 'BR_y', 'TL_x', 'TL_y', 'confidence', 'class'])
+        df = pd.DataFrame(columns=['TL_x', 'TL_y', 'BR_x', 'BR_y', 'confidence', 'class'])
 
         l1 = len(boxes)
 
         for i in range(l1):
             box = boxes[i]
 
-            BR_y, BR_x = int(box[0]), int(box[1])
-            TL_y, TL_x = int(box[2]), int(box[3])
+            TL_x, TL_y = int(box[0]), int(box[1])
+            BR_x, BR_y = int(box[2]), int(box[3])
             conf = float(box[4])
             cls = int(box[5])
 
             # use pd.concat instead of append to avoid deprecation
-            df = pd.concat([df, pd.DataFrame([[BR_x, BR_y, TL_x, TL_y, conf, cls]], columns=['BR_x', 'BR_y', 'TL_x', 'TL_y', 'confidence', 'class'])])
+            df = pd.concat([df, pd.DataFrame([[TL_x, TL_y, BR_x, BR_y, conf, cls]], columns=['TL_x', 'TL_y', 'BR_x', 'BR_y', 'confidence', 'class'])])
 
         # Save the dataframe as a .txt, no header and no index, and no column name, nothing, separated by \t
         df.to_csv(os.path.join(args.output_folder, os.path.basename(image_path).split('.')[0] + '.txt'), header=False, index=False, sep='\t')

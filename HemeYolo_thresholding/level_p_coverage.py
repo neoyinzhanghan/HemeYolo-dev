@@ -63,8 +63,11 @@ def level_p_coverage(label_path, output_path, conf_level=0, iou_level=0.50, regi
 
 if __name__ == "__main__":
 
-    labels_dir = "/Users/neo/Documents/Research/DeepHeme/HemeYolo_data/data2/labels"
-    outputs_dir = "/Users/neo/Documents/Research/DeepHeme/HemeYolo_data/data2/HemeYolo_annotations"
+    # labels_dir = "/Users/neo/Documents/Research/DeepHeme/HemeYolo_data/data2/labels"
+    # outputs_dir = "/Users/neo/Documents/Research/DeepHeme/HemeYolo_data/data2/HemeYolo_annotations"
+
+    labels_dir = "/Users/neo/Documents/Research/DeepHeme/HemeYolo_data/data3/split/valid/labels"
+    outputs_dir = "/Users/neo/Documents/Research/DeepHeme/HemeYolo_data/data3/split/valid/YOLO_outputs"
 
     # Get a list of label_path in the labels_dir with extension .txt
     # Get a list of output_path in the outputs_dir with extension .txt
