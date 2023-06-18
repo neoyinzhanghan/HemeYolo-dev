@@ -57,8 +57,7 @@ if __name__ == '__main__':
 
         result = model([image_path])[0]
 
-        boxes = result.boxes  # Boxes object for bbox outputs
-        probs = result.probs  # Class probabilities for classification outputs
+        boxes = result.data  # Boxes object for bbox outputs
 
         ### Start a pandas dataframe to store the result, saving each box and corresponding probability as a row
         ### The row is just concatenated to the dataframe. Each row is the just the box and the probability, and a dummie class index 0
@@ -66,27 +65,18 @@ if __name__ == '__main__':
 
         df = pd.DataFrame(columns=['TL_x', 'TL_y', 'BR_x', 'BR_y', 'probability', 'class'])
 
-        # if probs is None:
-        #     # write an empty txt file
-        #     df.to_csv(os.path.join(args.output_folder, os.path.basename(image_path).split('.')[0] + '.txt'), header=False, index=False, sep='\t')
-        #     continue
-
         l1 = len(boxes)
-        print(boxes)
-        # l2 = len(probs)
-        # print(probs)
 
-        # if l2 != l1:
-        #     raise ValueError('The number of boxes (got {l1}) and the number of probabilities (got {l2}) are not equal!')
-        
         for i in range(l1):
             box = boxes[i]
 
             TL_x, TL_y = box[0], box[1]
             BR_x, BR_y = box[2], box[3]
+            conf = box[4]
+            cls = int(box[5])
 
             # use pd.concat instead of append to avoid deprecation
-            df = pd.concat([df, pd.DataFrame([[TL_x, TL_y, BR_x, BR_y, 0]], columns=['TL_x', 'TL_y', 'BR_x', 'BR_y', 'class'])])
+            df = pd.concat([df, pd.DataFrame([[TL_x, TL_y, BR_x, BR_y, conf, cls]], columns=['TL_x', 'TL_y', 'BR_x', 'BR_y', 'confidence', 'class'])])
 
         # Save the dataframe as a .txt, no header and no index, and no column name, nothing, separated by \t
         df.to_csv(os.path.join(args.output_folder, os.path.basename(image_path).split('.')[0] + '.txt'), header=False, index=False, sep='\t')
