@@ -30,10 +30,14 @@ if __name__ == '__main__':
     #                     help='Path to your config file')
     group.add_argument('--chkpt_path', type=str,
                         help='Path to your checkpoint file')
-    # group.add_argument('--conf_thres', type=float, default=0,
-    #                     help='Confidence threshold for predictions')
-    # group.add_argument('--verbosity', type=int, default=0,
-    #                     help='Verbosity level')
+
+    ####################################
+    group = parser.add_argument_group('Hyperparameters')
+    ####################################
+
+    group.add_argument('--conf_thres', type=float, default=0,
+                       help='Confidence threshold for predictions')
+
 
     args = parser.parse_args()
 
@@ -65,15 +69,15 @@ if __name__ == '__main__':
         ### The row is just concatenated to the dataframe. Each row is the just the box and the probability, and a dummie class index 0
         ### Assuming that box is in the format [TL_x, TL_y, BR_x, BR_y]
 
-        df = pd.DataFrame(columns=['TL_x', 'TL_y', 'BR_x', 'BR_y', 'probability', 'class'])
+        df = pd.DataFrame(columns=['TL_x', 'TL_y', 'BR_x', 'BR_y', 'confidence', 'class'])
 
         l1 = len(boxes)
 
         for i in range(l1):
             box = boxes[i]
 
-            TL_x, TL_y = box[0], box[1]
-            BR_x, BR_y = box[2], box[3]
+            TL_x, TL_y = int(box[0]), int(box[1])
+            BR_x, BR_y = int(box[2]), int(box[3])
             conf = box[4]
             cls = int(box[5])
 
