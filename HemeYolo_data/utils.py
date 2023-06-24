@@ -17,6 +17,22 @@ def get_label_as_df(label_path):
 
     return df
 
+def get_output_as_df(output_path):
+    """ Read the output file as a pandas dataframe.
+    We are assuming the columns are in the following order: TL_x, TL_y, BR_x, BR_y, confidence, class. 
+    If the output file is empty, return None."""
+
+    if os.stat(output_path).st_size == 0:
+        return None
+
+    # open the output file as a pandas dataframe
+    df = pd.read_csv(output_path, sep='\t', header=None)
+
+    # rename the columns of df to TL_x, TL_y, BR_x, BR_y, confidence, class
+    df = df.rename(columns={0: 'TL_x', 1: 'TL_y', 2: 'BR_x', 3: 'BR_y', 4: 'confidence', 5: 'class'})
+
+    return df
+
 def visualize_confidence():
     # TODO
     pass
