@@ -44,6 +44,10 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    # if the output_folder does not exist, create it
+    if not os.path.exists(args.output_folder):
+        os.makedirs(args.output_folder)
+
     # Load the YOLO model
     print('Loading model...')
     model = YOLO(args.chkpt_path)
