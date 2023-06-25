@@ -237,11 +237,11 @@ def plot_p_values(label_dir:str, output_dir:str, alpha:float, max_p_value:float=
 
 
 if __name__ == '__main__':
-    calibrate = True   
-    test = False
+    calibrate = False
+    test = True
 
-    label_dir = "/Users/neo/Documents/Research/DeepHeme/HemeYolo_data/data4/split/train/labels"
-    output_dir = "/Users/neo/Documents/Research/DeepHeme/HemeYolo_data/data4/split/train/YOLO_outputs"
+    label_dir = "/Users/neo/Documents/Research/DeepHeme/HemeYolo_data/data5/split/test/labels"
+    output_dir = "/Users/neo/Documents/Research/DeepHeme/HemeYolo_data/data5/split/test/YOLO_outputs"
 
     if calibrate: # calibration is done on the validation set trying to find the threshold that achieves the desired false negative rate with p-value at a desired significance level
 
@@ -259,7 +259,7 @@ if __name__ == '__main__':
         alpha = 0.05
         threshold = 0.5
         min_iou = 0.5
-        threshold = 0.12121212121212122
+        threshold = 0.3535353535353536
 
         fnr, total = FNR(label_dir, output_dir, threshold, min_iou)
 
