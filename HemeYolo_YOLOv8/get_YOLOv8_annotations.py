@@ -93,4 +93,5 @@ if __name__ == '__main__':
             df = pd.concat([df, pd.DataFrame([[TL_x, TL_y, BR_x, BR_y, conf, cls]], columns=['TL_x', 'TL_y', 'BR_x', 'BR_y', 'confidence', 'class'])])
 
         # Save the dataframe as a .txt, no header and no index, and no column name, nothing, separated by \t
-        df.to_csv(os.path.join(args.output_folder, os.path.basename(image_path).split('.')[0] + '.txt'), header=False, index=False, sep='\t')
+        # the name of the file is the same as the image file but with .txt extension
+        df.to_csv(os.path.join(args.output_folder, os.path.basename(image_path)[:-4] + '.txt'), sep='\t', header=None, index=None)

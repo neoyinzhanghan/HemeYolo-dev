@@ -237,14 +237,34 @@ def plot_p_values(label_dir:str, output_dir:str, alpha:float, max_p_value:float=
 
 
 if __name__ == '__main__':
-    label_dir = "/Users/neo/Documents/Research/DeepHeme/HemeYolo_data/data3/split/valid/labels"
-    output_dir = "/Users/neo/Documents/Research/DeepHeme/HemeYolo_data/data3/split/valid/YOLO_outputs"
+    calibrate = True   
+    test = False
 
-    alpha = 0.05
-    max_p_value = 0.05
-    min_iou = 0.5
+    label_dir = "/Users/neo/Documents/Research/DeepHeme/HemeYolo_data/data4/split/train/labels"
+    output_dir = "/Users/neo/Documents/Research/DeepHeme/HemeYolo_data/data4/split/train/YOLO_outputs"
 
-    threshold, fnr, p_value = find_threshold(label_dir, output_dir, alpha, max_p_value, min_iou)
-    print('The threshold that achieves the desired false negative rate with p-value less than 0.05 is {0}'.format(threshold))
+    if calibrate: # calibration is done on the validation set trying to find the threshold that achieves the desired false negative rate with p-value at a desired significance level
 
-    plot_p_values(label_dir, output_dir, alpha, max_p_value, min_iou)
+        alpha = 0.05
+        max_p_value = 0.05
+        min_iou = 0.5
+
+        threshold, fnr, p_value = find_threshold(label_dir, output_dir, alpha, max_p_value, min_iou)
+        print(f'The threshold that achieves the desired false negative rate {fnr} (less than {alpha}) with p-value {p_value} less than {max_p_value} is {threshold}')
+
+        plot_p_values(label_dir, output_dir, alpha, max_p_value, min_iou)
+
+    if test: # test mode is done on the test set to calculate the false negative rate and the p-value given a threshold
+
+        alpha = 0.05
+        threshold = 0.5
+        min_iou = 0.5
+        threshold = 0.12121212121212122
+
+        fnr, total = FNR(label_dir, output_dir, threshold, min_iou)
+
+        p_value = Hoeffding_p_value(alpha, fnr, total)
+
+        print(f'The false negative rate is {fnr} and the p-value is {p_value} given threshold {threshold} with total number of labels {total}')
+
+        
