@@ -1,22 +1,24 @@
 # HemeYolo-dev/README
 
-Introduction
+# Introduction
 
-The HemeYolo package include a bunch of scripts to perform data preparation, model training, conformal caliberation, for cell object detections on bone marrow aspirate patches. 
+The HemeYolo package includes various scripts for cell object detection on bone marrow aspirate patches. These scripts cover data preparation, model training, conformal calibration, and more.
 
-Before doing anything, make sure you grab and install the HemeYolo-dev package.
+Before getting started, it is essential to download and install the HemeYolo-dev package. Here are the necessary steps:
 
-```bash
-git clone https://github.com/neoyinzhanghan/HemeYolo-dev
+```
+git clone <https://github.com/neoyinzhanghan/HemeYolo-dev>
 ```
 
-```bash
+```
 cd HemeYolo-dev
 ```
 
-```bash
+```
 pip install .
 ```
+
+After completing these steps, you can proceed with the pipeline for cell object detection.
 
 ---
 
@@ -281,7 +283,7 @@ The parameters are the same as `annotate_regions.py`.
 
 # Conformal Procedure
 
-Recommend that you create a new conda environment for this.
+Recommend that you create a new conda environment for this. This script assumes that HemeYolo-dev is your working directory.
 
 ```bash
 conda create --name HemeYolo_thresholding
