@@ -23,6 +23,7 @@ from HemeYolo_thresholding.calculate_iou import bb_intersection_over_union as io
 import matplotlib.pyplot as plt
 import seaborn as sns
 from tqdm import tqdm
+import argparse
 
 
 def FNR(label_dir:str, output_dir:str, threshold:float, min_iou:float=0.5, region_width:int=512, region_height:int=512) -> float:
@@ -237,34 +238,81 @@ def plot_p_values(label_dir:str, output_dir:str, alpha:float, max_p_value:float=
 
 
 if __name__ == '__main__':
-    calibrate = False
-    test = True
 
-    label_dir = "/Users/neo/Documents/Research/DeepHeme/HemeYolo_data/data5/split/test/labels"
-    output_dir = "/Users/neo/Documents/Research/DeepHeme/HemeYolo_data/data5/split/test/YOLO_outputs"
+    #############################################################################################################################
+    # ARGPARSE
+    #############################################################################################################################
 
-    if calibrate: # calibration is done on the validation set trying to find the threshold that achieves the desired false negative rate with p-value at a desired significance level
+    parser = argparse.ArgumentParser()
 
-        alpha = 0.05
-        max_p_value = 0.05
-        min_iou = 0.5
+    ####################################
+    group = parser.add_argument_group('Dataset and paths')
+    ####################################
 
-        threshold, fnr, p_value = find_threshold(label_dir, output_dir, alpha, max_p_value, min_iou)
-        print(f'The threshold that achieves the desired false negative rate {fnr} (less than {alpha}) with p-value {p_value} less than {max_p_value} is {threshold}')
+    group.add_argument('--label_dir', type=str,
+                        help='Directory containing input labels')
+    group.add_argument('--annotation_dir', type=str,
+                        help='Directory containing HemeYolo annotations')
+    
+    ####################################
+    group = parser.add_argument_group('Hyperarameters')
+    ####################################
+    group.add_argument('--mode', type=int, default=0,
+                        help='Mode of operation. 0 for calibration, 1 for test')
+    group.add_argument('--alpha', type=float, default=None,
+                        help='Desired false negative rate')
+    group.add_argument('--max_p_value', type=float, default=None,
+                        help='Desired p-value')
+    group.add_argument('--min_iou', type=float, default=None,
+                        help='IoU threshold')
+    group.add_argument('--conf_thres', type=float, default=None,
+                        help='Threshold for which you want to test the FNR performance')
+    
+    args = parser.parse_args()
 
-        plot_p_values(label_dir, output_dir, alpha, max_p_value, min_iou)
+    #############################################################################################################################
+    # THE SCRIPT
+    #############################################################################################################################
 
-    if test: # test mode is done on the test set to calculate the false negative rate and the p-value given a threshold
+    # min_iou must be declared in all cases, as a float between 0 and 1, if violated, raise a ValueError
+    if args.min_iou is None:
+        raise ValueError(f'min_iou must be declared.')
+    if args.min_iou < 0 or args.min_iou > 1:
+        raise ValueError(f'min_iou {args.min_iou} must be between 0 and 1.')
+    
+     # alpha must be declared in all cases, as a float between 0 and 1, if violated, raise a ValueError
+    if args.alpha is None:
+        raise ValueError(f'alpha must be declared.')
+    if args.alpha < 0 or args.alpha > 1:
+        raise ValueError(f'alpha {args.alpha} must be between 0 and 1.')
 
-        alpha = 0.05
-        threshold = 0.5
-        min_iou = 0.5
-        threshold = 0.3535353535353536
+    # If the mode is 1 then max_p_value should be default values
+    # If violated, print a UserWarning to inform the user that these parameters will be ignored
+    if args.mode == 1:
+        if args.max_p_value is not None:
+            print('User Warning: max_p_value is declared but the mode is 1. The max_p_value will be ignored.')
+        if args.min_iou is not None:
+            print('User Warning: min_iou is declared but the mode is 1. The min_iou will be ignored.')
 
-        fnr, total = FNR(label_dir, output_dir, threshold, min_iou)
+    # If the mode is 0, then the threshold must be declared, as a float between 0 and 1
+    # If violated, raise a ValueError
+    if args.mode == 0:
+        if args.threshold is None:
+            raise ValueError(f'Threshold must be declared when mode is 0.')
+        if args.threshold < 0 or args.threshold > 1:
+            raise ValueError(f'Threshold {args.threshold} must be between 0 and 1.')
 
-        p_value = Hoeffding_p_value(alpha, fnr, total)
+    if args.mode == 0: # calibration is done on the validation set trying to find the threshold that achieves the desired false negative rate with p-value at a desired significance level
 
-        print(f'The false negative rate is {fnr} and the p-value is {p_value} given threshold {threshold} with total number of labels {total}')
+        threshold, fnr, p_value = find_threshold(args.label_dir, args.annotation_dir, args.alpha, args.max_p_value, args.min_iou)
+        print(f'The threshold that achieves the desired false negative rate {fnr} (less than {args.alpha}) with p-value {p_value} less than {args.max_p_value} is {threshold} when min_iou is {args.min_iou}')
 
-        
+        plot_p_values(args.label_dir, args.annotation_dir, args.alpha, args.max_p_value, args.min_iou)
+
+    if args.mode == 1: # test mode is done on the test set to calculate the false negative rate and the p-value given a threshold
+
+        fnr, total = FNR(args.label_dir, args.annotation_dir, threshold, args.min_iou)
+
+        p_value = Hoeffding_p_value(args.alpha, fnr, total)
+
+        print(f'The false negative rate is {fnr} and the p-value is {p_value} given threshold {args.threshold} with total number of labels {total} when min_iou is {args.min_iou}')
