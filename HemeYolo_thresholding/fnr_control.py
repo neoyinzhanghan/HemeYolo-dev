@@ -312,10 +312,10 @@ if __name__ == '__main__':
 
     if args.mode == 1: # calibration is done on the validation set trying to find the threshold that achieves the desired false negative rate with p-value at a desired significance level
 
-        threshold, fnr, p_value = find_threshold(args.label_dir, args.annotation_dir, args.alpha, args.max_p_value, args.min_iou, region_width=args.region_width, region_height=args.region_height, raw=True)
+        threshold, fnr, p_value = find_threshold(args.label_dir, args.annotation_dir, args.alpha, args.max_p_value, args.min_iou, region_width=args.region_width, region_height=args.region_height, raw=False)
         print(f'The threshold that achieves the desired false negative rate {fnr} (less than {args.alpha}) with p-value {p_value} less than {args.max_p_value} is {threshold} when min_iou is {args.min_iou}')
 
-        plot_p_values(args.label_dir, args.annotation_dir, args.alpha, args.max_p_value, args.min_iou, region_height=args.region_height, region_width=args.region_width, raw=True)
+        plot_p_values(args.label_dir, args.annotation_dir, args.alpha, args.max_p_value, args.min_iou, region_height=args.region_height, region_width=args.region_width, raw=False)
 
     if args.mode == 0: # test mode is done on the test set to calculate the false negative rate and the p-value given a threshold
 
