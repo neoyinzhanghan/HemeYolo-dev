@@ -306,10 +306,10 @@ See the following Notion page for detailed descriptions of the conformal procedu
 For caliberating, use this script:
 
 ```bash
-python ./HemeYolo_thresholding.py \
+python ./HemeYolo_thresholding/fnr_control.py \
 --label_dir /path/to/folder/of/human/labels/calibration/set \
 --annotation_dir /path/to/folder/of/YOLO/annotations/calibration/set \
---mode 0 \
+--mode 1 \
 --max_p_value 0.05 \
 --alpha 0.05 \
 --min_iou 0.5 
@@ -318,9 +318,9 @@ python ./HemeYolo_thresholding.py \
 Once you have obtained a `conf_thres` from the calibration set, you can test its FNR performance on the test set using the following script:
 
 ```bash
-python ./HemeYolo_thresholding.py \
+python ./HemeYolo_thresholding/fnr_control.py \
 --label_dir /path/to/folder/of/human/labels/test/set \
 --annotation_dir /path/to/folder/of/YOLO/annotations/test/set \
---mode 1 \
+--mode 0 \
 --conf_thres 0.35
 ```

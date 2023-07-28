@@ -125,18 +125,21 @@ def FNR(label_dir:str, output_dir:str, threshold:float, min_iou:float=0.5, regio
     # return the false negative rate
     return fn_count / total , total
 
-def Hoeffding_p_value(alpha:float, fnr:float, total:int) -> float:
+def Hoeffding_p_value(alpha:float, fnr:float, total:int, raw:bool=False) -> float:
     """ Return the Hoeffding p-value given alpha and the false negative rate, and the total number of labels.
     p_c = \exp \ (-2n (\alpha-\hat{R}_c)_+^2), where \hat{R}_c is the empirical false negative rate. """
 
-    # calculate the Hoeffding p-value, make sure to ReLU the difference between alpha and fnr before squaring
-    p_value = np.exp(-2 * total * (max(alpha - fnr, 0))**2)
+    if not raw:
+        # calculate the Hoeffding p-value, make sure to ReLU the difference between alpha and fnr before squaring
+        p_value = np.exp(-2 * total * (max(alpha - fnr, 0))**2)
+    else:
+        p_value = fnr
 
     # return the Hoeffding p-value
     return p_value
 
 
-def find_threshold(label_dir:str, output_dir:str, alpha:float, max_p_value:float=0.05, min_iou:float=0.5, region_width:int=512, region_height:int=512, grid_size=100):
+def find_threshold(label_dir:str, output_dir:str, alpha:float, max_p_value:float=0.05, min_iou:float=0.5, region_width:int=512, region_height:int=512, grid_size=100, raw=False):
     """ Find the threshold that achieves the desired false negative rate with p-value less than 0.05. Return the threshold, the false negative rate, and the p-value.
     Return the threshold, the false negative rate, and the p-value."""
 
@@ -164,7 +167,7 @@ def find_threshold(label_dir:str, output_dir:str, alpha:float, max_p_value:float
         fnr, total = FNR(label_dir, output_dir, t, min_iou, region_width, region_height)
 
         # calculate the p-value
-        p_value = Hoeffding_p_value(alpha, fnr, total)
+        p_value = Hoeffding_p_value(alpha, fnr, total, raw=raw)
 
         # if the p-value is less than 0.05, then update the threshold and the p-value and continue
         if p_value < max_p_value:
@@ -180,7 +183,7 @@ def find_threshold(label_dir:str, output_dir:str, alpha:float, max_p_value:float
     # return the threshold, the false negative rate, and the p-value
     return threshold, observed_fnr, observed_p_value
 
-def plot_p_values(label_dir:str, output_dir:str, alpha:float, max_p_value:float=0.05, min_iou:float=0.5, region_width:int=512, region_height:int=512, grid_size=100):
+def plot_p_values(label_dir:str, output_dir:str, alpha:float, max_p_value:float=0.05, min_iou:float=0.5, region_width:int=512, region_height:int=512, grid_size=100, raw=False):
     """ Plot the p-values for different thresholds. """
 
     # initialize the grid, back traverse from 0 to 1
@@ -198,7 +201,7 @@ def plot_p_values(label_dir:str, output_dir:str, alpha:float, max_p_value:float=
         fnr, total = FNR(label_dir, output_dir, t, min_iou, region_width, region_height)
 
         # calculate the p-value
-        p_value = Hoeffding_p_value(alpha, fnr, total)
+        p_value = Hoeffding_p_value(alpha, fnr, total, raw=raw)
 
         # append the p-value to the list
         p_values.append(p_value)
@@ -257,8 +260,8 @@ if __name__ == '__main__':
     ####################################
     group = parser.add_argument_group('Hyperarameters')
     ####################################
-    group.add_argument('--mode', type=int, default=0,
-                        help='Mode of operation. 0 for calibration, 1 for test')
+    group.add_argument('--mode', type=int, default=1,
+                        help='Mode of operation. 1 for calibration, 0 for test')
     group.add_argument('--alpha', type=float, default=None,
                         help='Desired false negative rate')
     group.add_argument('--max_p_value', type=float, default=None,
@@ -267,7 +270,12 @@ if __name__ == '__main__':
                         help='IoU threshold')
     group.add_argument('--conf_thres', type=float, default=None,
                         help='Threshold for which you want to test the FNR performance')
-    
+    group.add_argument('--region_width', type=int, default=512,
+                        help='Width of the region')
+    group.add_argument('--region_height', type=int, default=512,
+                        help='Height of the region')
+
+
     args = parser.parse_args()
 
     #############################################################################################################################
@@ -286,9 +294,9 @@ if __name__ == '__main__':
     if args.alpha < 0 or args.alpha > 1:
         raise ValueError(f'alpha {args.alpha} must be between 0 and 1.')
 
-    # If the mode is 1 then max_p_value should be default values
+    # If the mode is 0 then max_p_value should be default values
     # If violated, print a UserWarning to inform the user that these parameters will be ignored
-    if args.mode == 1:
+    if args.mode == 0:
         if args.max_p_value is not None:
             print('User Warning: max_p_value is declared but the mode is 1. The max_p_value will be ignored.')
         if args.min_iou is not None:
@@ -297,22 +305,22 @@ if __name__ == '__main__':
     # If the mode is 0, then the threshold must be declared, as a float between 0 and 1
     # If violated, raise a ValueError
     if args.mode == 0:
-        if args.threshold is None:
+        if args.conf_thres is None:
             raise ValueError(f'Threshold must be declared when mode is 0.')
-        if args.threshold < 0 or args.threshold > 1:
-            raise ValueError(f'Threshold {args.threshold} must be between 0 and 1.')
+        if args.conf_thres < 0 or args.conf_thres > 1:
+            raise ValueError(f'Threshold {args.conf_thres} must be between 0 and 1.')
 
-    if args.mode == 0: # calibration is done on the validation set trying to find the threshold that achieves the desired false negative rate with p-value at a desired significance level
+    if args.mode == 1: # calibration is done on the validation set trying to find the threshold that achieves the desired false negative rate with p-value at a desired significance level
 
-        threshold, fnr, p_value = find_threshold(args.label_dir, args.annotation_dir, args.alpha, args.max_p_value, args.min_iou)
+        threshold, fnr, p_value = find_threshold(args.label_dir, args.annotation_dir, args.alpha, args.max_p_value, args.min_iou, region_width=args.region_width, region_height=args.region_height, raw=True)
         print(f'The threshold that achieves the desired false negative rate {fnr} (less than {args.alpha}) with p-value {p_value} less than {args.max_p_value} is {threshold} when min_iou is {args.min_iou}')
 
-        plot_p_values(args.label_dir, args.annotation_dir, args.alpha, args.max_p_value, args.min_iou)
+        plot_p_values(args.label_dir, args.annotation_dir, args.alpha, args.max_p_value, args.min_iou, region_height=args.region_height, region_width=args.region_width, raw=True)
 
-    if args.mode == 1: # test mode is done on the test set to calculate the false negative rate and the p-value given a threshold
+    if args.mode == 0: # test mode is done on the test set to calculate the false negative rate and the p-value given a threshold
 
-        fnr, total = FNR(args.label_dir, args.annotation_dir, threshold, args.min_iou)
+        fnr, total = FNR(args.label_dir, args.annotation_dir, args.conf_thres, args.min_iou, region_width=args.region_width, region_height=args.region_height)
 
         p_value = Hoeffding_p_value(args.alpha, fnr, total)
 
-        print(f'The false negative rate is {fnr} and the p-value is {p_value} given threshold {args.threshold} with total number of labels {total} when min_iou is {args.min_iou}')
+        print(f'The false negative rate is {fnr} and the p-value is {p_value} given threshold {args.conf_thres} with total number of labels {total} when min_iou is {args.min_iou}')
