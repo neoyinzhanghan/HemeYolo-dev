@@ -35,7 +35,8 @@ group.add_argument('--crop_width', type=int, default=512,
                     help='Width of the cropped region')
 group.add_argument('--crop_height', type=int, default=512,
                     help='Height of the cropped region')
-
+group.add_argument('--TL_only', type=bool, default=False,
+                   help="remove all except the TL")
 
 ####################################
 group = parser.add_argument_group('Hyperparameters')
@@ -148,3 +149,10 @@ if __name__ == '__main__':
     # first make sure that the images all have corresponding labels
     check_labels(os.path.join(args.output_dir, 'images'), os.path.join(args.output_dir, 'labels'))
     enforce_image_extension(os.path.join(args.output_dir, 'images'))
+
+    if args.TL_only:
+        # remove all files except ones whose basename end with TL in os.path.join(args.output_dir, 'images') and os.path.join(args.output_dir, 'labels')
+        for file in os.listdir(os.path.join(args.output_dir, 'images')):
+            if not file.endswith('TL.jpg'):
+                os.remove(os.path.join(args.output_dir, 'images', file))
+                os.remove(os.path.join(args.output_dir, 'labels', file.replace('.jpg', '.txt')))
