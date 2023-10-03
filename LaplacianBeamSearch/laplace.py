@@ -268,7 +268,7 @@ if __name__ == "__main__":
     group.add_argument("--bin", type=int, default=128,
                         help="Number of bins to use in the histogram used for thresholding calculation")
 
-    group.add_argument("--present_original", type=bool, default=False,
+    group.add_argument("--present_original", type=bool, default=True,
                         help="Whether to present the original image")
     
     group.add_argument("--verbose", type=bool, default=False,
@@ -310,9 +310,6 @@ if __name__ == "__main__":
 
             # save the image
             img_concat.save(os.path.join(args.output_dir, image_base_path))
-        
-        else:
-            # just save the thresholded image
 
-            # save the image
-            img_thresholded.save(os.path.join(args.output_dir, image_base_path))
+        else:
+            raise NotImplementedError("This part of the code is not implemented yet")
