@@ -64,7 +64,7 @@ def annotate_image(image, label_df, label_type='center-width-height', core_radiu
         # https://stackoverflow.com/questions/26649716/close-a-pil-draw-object
 
         draw = ImageDraw.Draw(image)
-        draw.rectangle(((TL_x, TL_y), (BR_x, BR_y)), outline='red') # need to swap red and blue if BGR
+        draw.rectangle(((TL_x, TL_y), (BR_x, BR_y)), outline='red', width=5) # need to swap red and blue if BGR
 
         if label_type == 'center-width-height':
             # draw a red dot at the center

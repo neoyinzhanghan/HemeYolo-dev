@@ -3,6 +3,7 @@ from ultralytics import YOLO
 import argparse
 import glob
 import pandas as pd
+import torch
 from tqdm import tqdm
 import cv2
 
@@ -47,6 +48,13 @@ if __name__ == '__main__':
     # if the output_folder does not exist, create it
     if not os.path.exists(args.output_folder):
         os.makedirs(args.output_folder)
+
+    def force_cudnn_initialization():
+        s = 32
+        dev = torch.device('cuda')
+        torch.nn.functional.conv2d(torch.zeros(s, s, s, s, device=dev), torch.zeros(s, s, s, s, device=dev))
+
+    force_cudnn_initialization
 
     # Load the YOLO model
     print('Loading model...')
