@@ -1,5 +1,7 @@
 # HemeYolo-dev/README
 
+# PYTHON VERSION == 3.9.0
+
 # Introduction
 
 The HemeYolo package includes various scripts for cell object detection on bone marrow aspirate patches. These scripts cover data preparation, model training, conformal calibration, and more.
