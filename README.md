@@ -191,7 +191,7 @@ The `model` parameter specifies which version of YOLO to use, the `custom.yaml` 
 Use the same conda environment as the training script. Have a folder of regions to be annotated, and run the following script. The training script from earlier will generate two checkpoint files in `./detect/train/weights/` — `[last.pt](http://last.pt)` and `best.pt`. The former is the checkpoint from the last epoch of training and the best is the checkpoint with the best performance across all epochs of training. This command assumes that HemeYolo-dev/HemeYolo_YOLOv8 is your working directory.
 
 ```bash
-python ./get_YOLOv8_annotations.py \
+python ./HemeYolo_YOLOv8/get_YOLOv8_annotations.py \
 --data_folder /path/to/folder/of/regions/to/be/annotated \
 --output_folder /path/to/folder/to/save/output/labels \
 --chkpt_path /path/to/the/model/checkpoint \
